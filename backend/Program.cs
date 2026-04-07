@@ -2,6 +2,8 @@ using backend.Data;
 using backend.Services.UserService;
 using Microsoft.EntityFrameworkCore;
 
+DotNetEnv.Env.Load();
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
