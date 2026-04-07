@@ -1,5 +1,5 @@
-using backend.Models;
-using backend.Services;
+using backend.DTOs.UserDtos;
+using backend.Services.UserService;
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers;
@@ -45,11 +45,11 @@ public class UsersController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] User user)
+    public async Task<IActionResult> Create([FromBody] CreateUserDto dto)
     {
         try
         {
-            var created = await _userService.CreateUserAsync(user);
+            var created = await _userService.CreateUserAsync(dto);
             return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
         catch (InvalidOperationException ex)
@@ -59,11 +59,11 @@ public class UsersController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, [FromBody] User updatedUser)
+    public async Task<IActionResult> Update(int id, [FromBody] UpdateUserDto dto)
     {
         try
         {
-            var user = await _userService.UpdateUserAsync(id, updatedUser);
+            var user = await _userService.UpdateUserAsync(id, dto);
             if (user is null)
             {
                 return NotFound(new { message = "User not found." });

@@ -15,13 +15,17 @@ dotnet tool install --global dotnet-ef
 
 ```
 backend/
-├── Controllers/        # API controllers
-├── Data/               # DbContext
-├── Migrations/         # EF Core migrations
-├── Models/             # Entity models
-├── Services/           # Business logic (interfaces + implementations)
-├── Program.cs          # App entry point
-├── appsettings.json    # Production config (no credentials)
+├── Controllers/            # API controllers
+├── Data/                   # DbContext
+├── DTOs/                   # Data Transfer Objects
+│   └── UserDtos/           # User-specific DTOs (Create, Update, Response)
+├── Migrations/             # EF Core migrations
+├── Models/                 # Entity models
+├── Services/               # Business logic
+│   └── UserService/        # User service (interface + implementation)
+├── openapi.json            # Static OpenAPI spec (for frontend integration)
+├── Program.cs              # App entry point
+├── appsettings.json        # Production config (no credentials)
 └── appsettings.Development.json  # Dev config (with DB connection string)
 ```
 
@@ -80,6 +84,16 @@ The API starts at: `http://localhost:5047`
 ### Swagger UI
 
 Open [http://localhost:5047/swagger](http://localhost:5047/swagger) for interactive API docs.
+
+### OpenAPI Spec
+
+A static `openapi.json` file is available at `backend/openapi.json` for frontend integration, Postman import, or code generation.
+
+To regenerate it while the server is running:
+
+```bash
+curl -s http://localhost:5047/openapi/v1.json -o backend/openapi.json
+```
 
 ### Users API
 
