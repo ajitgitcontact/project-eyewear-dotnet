@@ -98,6 +98,19 @@ public class UserService : IUserService
         return true;
     }
 
+    public async Task<UserResponseDto?> LoginAsync(LoginDto dto)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
+        if (user is null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
+        {
+            return null;
+        }
+
+        user.LastLoginAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+        return MapToResponseDto(user);
+    }
+
     private static UserResponseDto MapToResponseDto(User user)
     {
         return new UserResponseDto
