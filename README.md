@@ -165,6 +165,8 @@ Open [http://localhost:5047/swagger](http://localhost:5047/swagger) for interact
 
 | Method | Endpoint | Description |
 |---|---|---|
+| `GET` | `/api/products/{productId}/options` | Get all options for a product |
+| `GET` | `/api/products/options/{optionId}` | Get option by ID |
 | `POST` | `/api/products/{productId}/options` | Add customization option |
 | `PUT` | `/api/products/options/{optionId}` | Update option |
 | `DELETE` | `/api/products/options/{optionId}` | Delete option (cascades values) |
@@ -173,6 +175,8 @@ Open [http://localhost:5047/swagger](http://localhost:5047/swagger) for interact
 
 | Method | Endpoint | Description |
 |---|---|---|
+| `GET` | `/api/products/options/{optionId}/values` | Get all values for an option |
+| `GET` | `/api/products/values/{valueId}` | Get value by ID |
 | `POST` | `/api/products/options/{optionId}/values` | Add value to option |
 | `PUT` | `/api/products/values/{valueId}` | Update value |
 | `DELETE` | `/api/products/values/{valueId}` | Delete value |
@@ -181,6 +185,8 @@ Open [http://localhost:5047/swagger](http://localhost:5047/swagger) for interact
 
 | Method | Endpoint | Description |
 |---|---|---|
+| `GET` | `/api/products/{productId}/images` | Get all images for a product |
+| `GET` | `/api/products/images/{imageId}` | Get image by ID |
 | `POST` | `/api/products/{productId}/images` | Add product image |
 | `PUT` | `/api/products/images/{imageId}` | Update image |
 | `DELETE` | `/api/products/images/{imageId}` | Delete image |
@@ -189,6 +195,8 @@ Open [http://localhost:5047/swagger](http://localhost:5047/swagger) for interact
 
 | Method | Endpoint | Description |
 |---|---|---|
+| `GET` | `/api/products/{productId}/customization-images` | Get all customization images for a product |
+| `GET` | `/api/products/customization-images/{imageId}` | Get customization image by ID |
 | `POST` | `/api/products/{productId}/customization-images` | Add customization image |
 | `PUT` | `/api/products/customization-images/{imageId}` | Update customization image |
 | `DELETE` | `/api/products/customization-images/{imageId}` | Delete customization image |

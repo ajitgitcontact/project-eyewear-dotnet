@@ -123,6 +123,23 @@ public class ProductsController : ControllerBase
 
     // ─── Customization Options ──────────────────────────────────
 
+    [HttpGet("{productId}/options")]
+    public async Task<IActionResult> GetOptionsByProductId(int productId)
+    {
+        var options = await _optionService.GetByProductIdAsync(productId);
+        return Ok(options);
+    }
+
+    [HttpGet("options/{optionId}")]
+    public async Task<IActionResult> GetOptionById(int optionId)
+    {
+        var option = await _optionService.GetByIdAsync(optionId);
+        if (option is null)
+            return NotFound(new { message = "Customization option not found." });
+
+        return Ok(option);
+    }
+
     [HttpPost("{productId}/options")]
     public async Task<IActionResult> AddOption(int productId, [FromBody] CreateCustomizationOptionDto dto)
     {
@@ -159,6 +176,23 @@ public class ProductsController : ControllerBase
     }
 
     // ─── Customization Values ───────────────────────────────────
+
+    [HttpGet("options/{optionId}/values")]
+    public async Task<IActionResult> GetValuesByOptionId(int optionId)
+    {
+        var values = await _valueService.GetByOptionIdAsync(optionId);
+        return Ok(values);
+    }
+
+    [HttpGet("values/{valueId}")]
+    public async Task<IActionResult> GetValueById(int valueId)
+    {
+        var value = await _valueService.GetByIdAsync(valueId);
+        if (value is null)
+            return NotFound(new { message = "Customization value not found." });
+
+        return Ok(value);
+    }
 
     [HttpPost("options/{optionId}/values")]
     public async Task<IActionResult> AddValue(int optionId, [FromBody] CreateCustomizationValueDto dto)
@@ -197,6 +231,23 @@ public class ProductsController : ControllerBase
 
     // ─── Product Images ─────────────────────────────────────────
 
+    [HttpGet("{productId}/images")]
+    public async Task<IActionResult> GetImagesByProductId(int productId)
+    {
+        var images = await _imageService.GetByProductIdAsync(productId);
+        return Ok(images);
+    }
+
+    [HttpGet("images/{imageId}")]
+    public async Task<IActionResult> GetImageById(int imageId)
+    {
+        var image = await _imageService.GetByIdAsync(imageId);
+        if (image is null)
+            return NotFound(new { message = "Product image not found." });
+
+        return Ok(image);
+    }
+
     [HttpPost("{productId}/images")]
     public async Task<IActionResult> AddImage(int productId, [FromBody] CreateProductImageDto dto)
     {
@@ -233,6 +284,23 @@ public class ProductsController : ControllerBase
     }
 
     // ─── Customization Images ───────────────────────────────────
+
+    [HttpGet("{productId}/customization-images")]
+    public async Task<IActionResult> GetCustomizationImagesByProductId(int productId)
+    {
+        var images = await _custImageService.GetByProductIdAsync(productId);
+        return Ok(images);
+    }
+
+    [HttpGet("customization-images/{imageId}")]
+    public async Task<IActionResult> GetCustomizationImageById(int imageId)
+    {
+        var image = await _custImageService.GetByIdAsync(imageId);
+        if (image is null)
+            return NotFound(new { message = "Customization image not found." });
+
+        return Ok(image);
+    }
 
     [HttpPost("{productId}/customization-images")]
     public async Task<IActionResult> AddCustomizationImage(int productId, [FromBody] CreateCustomizationImageDto dto)
