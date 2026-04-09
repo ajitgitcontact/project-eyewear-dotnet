@@ -1,12 +1,17 @@
 using backend.Data;
+using backend.Middleware;
 using backend.Services.UserService;
 using backend.Services.ProductsService.Interfaces;
 using backend.Services.ProductsService.Services;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 
 DotNetEnv.Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((context, loggerConfiguration) =>
+    loggerConfiguration.ReadFrom.Configuration(context.Configuration));
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
@@ -23,6 +28,10 @@ builder.Services.AddScoped<ICustomizationImageService, CustomizationImageService
 builder.Services.AddScoped<IProductBusinessService, ProductBusinessService>();
 
 var app = builder.Build();
+
+app.UseMiddleware<CorrelationIdMiddleware>();
+app.UseMiddleware<GlobalExceptionMiddleware>();
+app.UseSerilogRequestLogging();
 
 if (app.Environment.IsDevelopment())
 {

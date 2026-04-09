@@ -4,27 +4,38 @@ using backend.DTOs.ProductImageDtos;
 using backend.Models.Products;
 using backend.Services.ProductsService.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace backend.Services.ProductsService.Services;
 
 public class ProductBusinessService : IProductBusinessService
 {
     private readonly AppDbContext _context;
+    private readonly ILogger<ProductBusinessService> _logger;
 
-    public ProductBusinessService(AppDbContext context)
+    public ProductBusinessService(AppDbContext context, ILogger<ProductBusinessService> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     public async Task<FullProductResponseDto> CreateFullProductAsync(CreateFullProductDto dto)
     {
+        _logger.LogInformation(
+            "Starting full product creation. Input: SKU={Sku}, Name='{Name}', Brand={Brand}, Category={Category}, BasePrice={BasePrice}, InputImages={InputImageCount}, InputOptions={InputOptionCount}",
+            dto.SKU, dto.Name, dto.Brand, dto.Category, dto.BasePrice, dto.Images.Count, dto.CustomizationOptions.Count);
+
         // Validate SKU uniqueness
         var skuExists = await _context.Products.AnyAsync(p => p.SKU == dto.SKU);
         if (skuExists)
+        {
+            _logger.LogError("Full product creation blocked. SKU already exists. SKU={Sku}", dto.SKU);
             throw new InvalidOperationException("A product with this SKU already exists.");
+        }
 
         // Use a transaction to ensure all-or-nothing
         await using var transaction = await _context.Database.BeginTransactionAsync();
+        _logger.LogInformation("Database transaction started for SKU={Sku}", dto.SKU);
 
         try
         {
@@ -42,6 +53,7 @@ public class ProductBusinessService : IProductBusinessService
             };
             _context.Products.Add(product);
             await _context.SaveChangesAsync();
+            _logger.LogInformation("Product created in transaction. ProductId={ProductId}, SKU={Sku}", product.ProductId, product.SKU);
 
             // 2. Create Product Images
             var createdImages = new List<ProductImage>();
@@ -59,7 +71,10 @@ public class ProductBusinessService : IProductBusinessService
                 createdImages.Add(image);
             }
             if (createdImages.Count > 0)
+            {
                 await _context.SaveChangesAsync();
+                _logger.LogInformation("Product images created. ProductId={ProductId}, Count={ImageCount}", product.ProductId, createdImages.Count);
+            }
 
             // 3. Create Customization Options → Values → Customization Images
             var optionResponses = new List<FullCustomizationOptionResponseDto>();
@@ -76,6 +91,10 @@ public class ProductBusinessService : IProductBusinessService
                 };
                 _context.CustomizationOptions.Add(option);
                 await _context.SaveChangesAsync();
+                _logger.LogInformation("Customization option created. ProductId={ProductId}, OptionId={OptionId}, Name={OptionName}",
+                    product.ProductId,
+                    option.CustomizationOptionId,
+                    option.Name);
 
                 var valueResponses = new List<FullCustomizationValueResponseDto>();
 
@@ -90,6 +109,9 @@ public class ProductBusinessService : IProductBusinessService
                     };
                     _context.CustomizationValues.Add(value);
                     await _context.SaveChangesAsync();
+                    _logger.LogInformation("Customization value created. OptionId={OptionId}, ValueId={ValueId}",
+                        option.CustomizationOptionId,
+                        value.CustomizationValueId);
 
                     var custImageResponses = new List<FullCustomizationImageResponseDto>();
 
@@ -105,6 +127,11 @@ public class ProductBusinessService : IProductBusinessService
                         };
                         _context.CustomizationImages.Add(custImage);
                         await _context.SaveChangesAsync();
+                        _logger.LogInformation("Customization image created. ProductId={ProductId}, OptionId={OptionId}, ValueId={ValueId}, ImageId={ImageId}",
+                            product.ProductId,
+                            option.CustomizationOptionId,
+                            value.CustomizationValueId,
+                            custImage.CustomizationImageId);
 
                         custImageResponses.Add(new FullCustomizationImageResponseDto
                         {
@@ -141,6 +168,12 @@ public class ProductBusinessService : IProductBusinessService
             }
 
             await transaction.CommitAsync();
+            _logger.LogInformation(
+                "Full product creation committed. ProductId={ProductId}, SKU={Sku}, Images={ImageCount}, Options={OptionCount}",
+                product.ProductId,
+                product.SKU,
+                createdImages.Count,
+                optionResponses.Count);
 
             return new FullProductResponseDto
             {
@@ -167,15 +200,17 @@ public class ProductBusinessService : IProductBusinessService
                 CustomizationOptions = optionResponses
             };
         }
-        catch
+        catch (Exception ex)
         {
             await transaction.RollbackAsync();
+            _logger.LogError(ex, "Full product creation rolled back. SKU={Sku}", dto.SKU);
             throw;
         }
     }
 
     public async Task<FullProductResponseDto?> GetFullProductByIdAsync(int productId)
     {
+        _logger.LogInformation("Fetching full product by id. Input: ProductId={ProductId}", productId);
         var product = await _context.Products
             .Include(p => p.ProductImages.OrderBy(i => i.DisplayOrder))
             .Include(p => p.CustomizationOptions.OrderBy(o => o.DisplayOrder))
@@ -183,19 +218,30 @@ public class ProductBusinessService : IProductBusinessService
             .Include(p => p.CustomizationImages)
             .FirstOrDefaultAsync(p => p.ProductId == productId);
 
-        if (product is null) return null;
+        if (product is null)
+        {
+            _logger.LogInformation("Get full product by id result. Input: ProductId={ProductId} => Output: Found=false", productId);
+            return null;
+        }
+
+        _logger.LogInformation(
+            "Get full product by id result. Input: ProductId={ProductId} => Output: Found=true, SKU={Sku}, Name='{Name}', Images={ImageCount}, Options={OptionCount}",
+            productId, product.SKU, product.Name, product.ProductImages.Count, product.CustomizationOptions.Count);
 
         return MapToFullDto(product);
     }
 
     public async Task<IEnumerable<FullProductResponseDto>> GetAllFullProductsAsync()
     {
+        _logger.LogInformation("Fetching all full products.");
         var products = await _context.Products
             .Include(p => p.ProductImages.OrderBy(i => i.DisplayOrder))
             .Include(p => p.CustomizationOptions.OrderBy(o => o.DisplayOrder))
                 .ThenInclude(o => o.CustomizationValues)
             .Include(p => p.CustomizationImages)
             .ToListAsync();
+
+        _logger.LogInformation("Fetched all full products. Output: Count={Count}", products.Count);
 
         return products.Select(MapToFullDto);
     }
