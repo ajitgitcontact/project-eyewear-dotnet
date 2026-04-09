@@ -21,6 +21,9 @@ ASP.NET Core Web API with Entity Framework Core and Supabase PostgreSQL for an e
 | `Swashbuckle.AspNetCore.SwaggerUI` | 10.1.7 | Swagger UI |
 | `BCrypt.Net-Next` | 4.1.0 | Password hashing |
 | `DotNetEnv` | 3.1.1 | `.env` file support |
+| `Serilog.AspNetCore` | 9.0.0 | ASP.NET Core structured logging |
+| `Serilog.Sinks.Console` | 6.0.0 | Console log output |
+| `Serilog.Sinks.File` | 7.0.0 | Rolling file log output |
 
 ## Project Structure
 
@@ -258,12 +261,67 @@ curl -X POST http://localhost:5047/api/products \
   }'
 ```
 
+## Logging & Monitoring
+
+### Structured Logging with Serilog
+
+All API requests and service operations are logged with structured data for easy querying and debugging:
+
+- **Console Sink:** Real-time log output in development
+- **File Sink:** Rolling daily log files in `backend/logs/eyewear-YYYYMMDD.log` with 14-day retention
+- **Correlation IDs:** Track request flow across services using `X-Correlation-ID` header
+
+#### Log Format
+
+```
+[HH:mm:ss Level] (CorrelationId) SourceContext - Message
+
+Example:
+[14:23:45 INF] (abc123def456) backend.Services.UserService.UserService - Output: Found=true, Email=user@example.com
+```
+
+#### Middleware
+
+1. **CorrelationIdMiddleware** — Generates or reads `X-Correlation-ID` header to track requests
+   - All logs within a request share the same correlation ID
+   - Correlation ID echoed in response headers
+
+2. **GlobalExceptionMiddleware** — Catches all unhandled exceptions and returns structured JSON error responses
+   - Maps exceptions to appropriate HTTP status codes (400, 409, 500)
+   - Includes correlation ID in error response for log correlation
+
+#### Log Levels
+
+- **Production:** `Information` (important events only)
+- **Development:** `Debug` (verbose output for application code, `Information` for frameworks)
+
+#### Viewing Logs
+
+```bash
+# Watch logs in real-time (development)
+dotnet run  # Check console output
+
+# Read historical logs
+cat backend/logs/eyewear-2026-04-09.log
+
+# Filter by correlation ID
+grep "abc123def456" backend/logs/eyewear-*.log
+```
+
+#### Configuration
+
+Logging is configured in `appsettings.json` and `appsettings.Development.json`:
+- Console output template includes timestamp, level, correlation ID, source, and message
+- File output includes full timestamp with timezone
+- Daily rolling files with 14-day retention (older files auto-deleted)
+
 ## Tech Stack
 
 - **.NET 9** — ASP.NET Core Web API (controller-based)
 - **Entity Framework Core 9** — ORM with code-first migrations
 - **Npgsql** — PostgreSQL provider for EF Core
 - **Supabase** — Hosted PostgreSQL database
+- **Serilog 9.0.0** — Structured logging with Console and File sinks
 - **BCrypt.Net** — Password hashing
 - **DotNetEnv** — Environment variable management
 - **Swagger / OpenAPI** — API documentation
