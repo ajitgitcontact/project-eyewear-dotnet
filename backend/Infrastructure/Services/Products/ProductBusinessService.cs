@@ -1,12 +1,13 @@
+using backend.Application.Exceptions;
+using backend.Application.Abstractions.Products;
 using backend.Data;
 using backend.DTOs.ProductDtos;
 using backend.DTOs.ProductImageDtos;
 using backend.Models.Products;
-using backend.Services.ProductsService.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace backend.Services.ProductsService.Services;
+namespace backend.Infrastructure.Services.Products;
 
 public class ProductBusinessService : IProductBusinessService
 {
@@ -30,7 +31,7 @@ public class ProductBusinessService : IProductBusinessService
         if (skuExists)
         {
             _logger.LogError("Full product creation blocked. SKU already exists. SKU={Sku}", dto.SKU);
-            throw new InvalidOperationException("A product with this SKU already exists.");
+            throw new ConflictException("A product with this SKU already exists.");
         }
 
         // Use a transaction to ensure all-or-nothing
@@ -208,7 +209,7 @@ public class ProductBusinessService : IProductBusinessService
         }
     }
 
-    public async Task<FullProductResponseDto?> GetFullProductByIdAsync(int productId)
+    public async Task<FullProductResponseDto> GetFullProductByIdAsync(int productId)
     {
         _logger.LogInformation("Fetching full product by id. Input: ProductId={ProductId}", productId);
         var product = await _context.Products
@@ -221,7 +222,7 @@ public class ProductBusinessService : IProductBusinessService
         if (product is null)
         {
             _logger.LogInformation("Get full product by id result. Input: ProductId={ProductId} => Output: Found=false", productId);
-            return null;
+            throw new NotFoundException("Product not found.");
         }
 
         _logger.LogInformation(

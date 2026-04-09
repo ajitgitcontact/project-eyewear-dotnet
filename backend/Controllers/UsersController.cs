@@ -1,5 +1,5 @@
 using backend.DTOs.UserDtos;
-using backend.Services.UserService;
+using backend.Application.Abstractions.Users;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
@@ -32,11 +32,6 @@ public class UsersController : ControllerBase
     {
         _logger.LogInformation("Get user by id request received. UserId={UserId}", id);
         var user = await _userService.GetUserByIdAsync(id);
-        if (user is null)
-        {
-            _logger.LogInformation("Get user by id not found. UserId={UserId}", id);
-            return NotFound(new { message = "User not found." });
-        }
         _logger.LogInformation("Get user by id succeeded. UserId={UserId}", id);
         return Ok(user);
     }
@@ -46,11 +41,6 @@ public class UsersController : ControllerBase
     {
         _logger.LogInformation("Get user by email request received.");
         var user = await _userService.GetUserByEmailAsync(email);
-        if (user is null)
-        {
-            _logger.LogInformation("Get user by email not found.");
-            return NotFound(new { message = "User not found." });
-        }
         _logger.LogInformation("Get user by email succeeded. UserId={UserId}", user.Id);
         return Ok(user);
     }
@@ -59,39 +49,18 @@ public class UsersController : ControllerBase
     public async Task<IActionResult> Create([FromBody] CreateUserDto dto)
     {
         _logger.LogInformation("Create user request received.");
-        try
-        {
-            var created = await _userService.CreateUserAsync(dto);
-            _logger.LogInformation("Create user succeeded. UserId={UserId}", created.Id);
-            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
-        }
-        catch (InvalidOperationException ex)
-        {
-            _logger.LogError(ex, "Create user failed due to business validation.");
-            return Conflict(new { message = ex.Message });
-        }
+        var created = await _userService.CreateUserAsync(dto);
+        _logger.LogInformation("Create user succeeded. UserId={UserId}", created.Id);
+        return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
 
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateUserDto dto)
     {
         _logger.LogInformation("Update user request received. UserId={UserId}", id);
-        try
-        {
-            var user = await _userService.UpdateUserAsync(id, dto);
-            if (user is null)
-            {
-                _logger.LogInformation("Update user not found. UserId={UserId}", id);
-                return NotFound(new { message = "User not found." });
-            }
-            _logger.LogInformation("Update user succeeded. UserId={UserId}", id);
-            return Ok(user);
-        }
-        catch (InvalidOperationException ex)
-        {
-            _logger.LogError(ex, "Update user failed due to business validation. UserId={UserId}", id);
-            return Conflict(new { message = ex.Message });
-        }
+        var user = await _userService.UpdateUserAsync(id, dto);
+        _logger.LogInformation("Update user succeeded. UserId={UserId}", id);
+        return Ok(user);
     }
 
     [HttpPost("login")]
@@ -99,11 +68,6 @@ public class UsersController : ControllerBase
     {
         _logger.LogInformation("Login request received.");
         var user = await _userService.LoginAsync(dto);
-        if (user is null)
-        {
-            _logger.LogInformation("Login failed.");
-            return Unauthorized(new { message = "Invalid email or password." });
-        }
         _logger.LogInformation("Login succeeded. UserId={UserId}", user.Id);
         return Ok(user);
     }
@@ -112,12 +76,7 @@ public class UsersController : ControllerBase
     public async Task<IActionResult> Delete(int id)
     {
         _logger.LogInformation("Delete user request received. UserId={UserId}", id);
-        var deleted = await _userService.DeleteUserAsync(id);
-        if (!deleted)
-        {
-            _logger.LogInformation("Delete user not found. UserId={UserId}", id);
-            return NotFound(new { message = "User not found." });
-        }
+        await _userService.DeleteUserAsync(id);
         _logger.LogInformation("Delete user succeeded. UserId={UserId}", id);
         return NoContent();
     }

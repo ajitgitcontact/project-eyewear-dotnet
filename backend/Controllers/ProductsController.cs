@@ -3,7 +3,7 @@ using backend.DTOs.CustomizationOptionDtos;
 using backend.DTOs.CustomizationValueDtos;
 using backend.DTOs.ProductImageDtos;
 using backend.DTOs.CustomizationImageDtos;
-using backend.Services.ProductsService.Interfaces;
+using backend.Application.Abstractions.Products;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
@@ -46,17 +46,9 @@ public class ProductsController : ControllerBase
     public async Task<IActionResult> CreateFullProduct([FromBody] CreateFullProductDto dto)
     {
         _logger.LogInformation("CreateFullProduct request received. SKU={Sku}", dto.SKU);
-        try
-        {
-            var result = await _businessService.CreateFullProductAsync(dto);
-            _logger.LogInformation("CreateFullProduct succeeded. ProductId={ProductId}, SKU={Sku}", result.ProductId, result.SKU);
-            return CreatedAtAction(nameof(GetById), new { id = result.ProductId }, result);
-        }
-        catch (InvalidOperationException ex)
-        {
-            _logger.LogError(ex, "CreateFullProduct failed for SKU={Sku}", dto.SKU);
-            return Conflict(new { message = ex.Message });
-        }
+        var result = await _businessService.CreateFullProductAsync(dto);
+        _logger.LogInformation("CreateFullProduct succeeded. ProductId={ProductId}, SKU={Sku}", result.ProductId, result.SKU);
+        return CreatedAtAction(nameof(GetById), new { id = result.ProductId }, result);
     }
 
     /// <summary>
@@ -67,12 +59,6 @@ public class ProductsController : ControllerBase
     {
         _logger.LogInformation("GetById request received. ProductId={ProductId}", id);
         var product = await _businessService.GetFullProductByIdAsync(id);
-        if (product is null)
-        {
-            _logger.LogInformation("GetById not found. ProductId={ProductId}", id);
-            return NotFound(new { message = "Product not found." });
-        }
-
         _logger.LogInformation("GetById succeeded. ProductId={ProductId}", id);
         return Ok(product);
     }
@@ -96,23 +82,9 @@ public class ProductsController : ControllerBase
     public async Task<IActionResult> Update(int id, [FromBody] UpdateProductDto dto)
     {
         _logger.LogInformation("Update product request received. ProductId={ProductId}, SKU={Sku}", id, dto.SKU);
-        try
-        {
-            var product = await _productService.UpdateAsync(id, dto);
-            if (product is null)
-            {
-                _logger.LogInformation("Update product not found. ProductId={ProductId}", id);
-                return NotFound(new { message = "Product not found." });
-            }
-
-            _logger.LogInformation("Update product succeeded. ProductId={ProductId}", id);
-            return Ok(product);
-        }
-        catch (InvalidOperationException ex)
-        {
-            _logger.LogError(ex, "Update product failed. ProductId={ProductId}, SKU={Sku}", id, dto.SKU);
-            return Conflict(new { message = ex.Message });
-        }
+        var product = await _productService.UpdateAsync(id, dto);
+        _logger.LogInformation("Update product succeeded. ProductId={ProductId}", id);
+        return Ok(product);
     }
 
     /// <summary>
@@ -122,13 +94,7 @@ public class ProductsController : ControllerBase
     public async Task<IActionResult> Delete(int id)
     {
         _logger.LogInformation("Delete product request received. ProductId={ProductId}", id);
-        var deleted = await _productService.DeleteAsync(id);
-        if (!deleted)
-        {
-            _logger.LogInformation("Delete product not found. ProductId={ProductId}", id);
-            return NotFound(new { message = "Product not found." });
-        }
-
+        await _productService.DeleteAsync(id);
         _logger.LogInformation("Delete product succeeded. ProductId={ProductId}", id);
         return NoContent();
     }
@@ -141,12 +107,6 @@ public class ProductsController : ControllerBase
     {
         _logger.LogInformation("GetBySku request received. SKU={Sku}", sku);
         var product = await _productService.GetBySkuAsync(sku);
-        if (product is null)
-        {
-            _logger.LogInformation("GetBySku not found. SKU={Sku}", sku);
-            return NotFound(new { message = "Product not found." });
-        }
-
         _logger.LogInformation("GetBySku succeeded. SKU={Sku}, ProductId={ProductId}", sku, product.ProductId);
         return Ok(product);
     }
@@ -164,44 +124,28 @@ public class ProductsController : ControllerBase
     public async Task<IActionResult> GetOptionById(int optionId)
     {
         var option = await _optionService.GetByIdAsync(optionId);
-        if (option is null)
-            return NotFound(new { message = "Customization option not found." });
-
         return Ok(option);
     }
 
     [HttpPost("{productId}/options")]
     public async Task<IActionResult> AddOption(int productId, [FromBody] CreateCustomizationOptionDto dto)
     {
-        try
-        {
-            dto.ProductId = productId;
-            var result = await _optionService.CreateAsync(dto);
-            return CreatedAtAction(nameof(GetById), new { id = productId }, result);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        dto.ProductId = productId;
+        var result = await _optionService.CreateAsync(dto);
+        return CreatedAtAction(nameof(GetById), new { id = productId }, result);
     }
 
     [HttpPut("options/{optionId}")]
     public async Task<IActionResult> UpdateOption(int optionId, [FromBody] UpdateCustomizationOptionDto dto)
     {
         var result = await _optionService.UpdateAsync(optionId, dto);
-        if (result is null)
-            return NotFound(new { message = "Customization option not found." });
-
         return Ok(result);
     }
 
     [HttpDelete("options/{optionId}")]
     public async Task<IActionResult> DeleteOption(int optionId)
     {
-        var deleted = await _optionService.DeleteAsync(optionId);
-        if (!deleted)
-            return NotFound(new { message = "Customization option not found." });
-
+        await _optionService.DeleteAsync(optionId);
         return NoContent();
     }
 
@@ -218,44 +162,28 @@ public class ProductsController : ControllerBase
     public async Task<IActionResult> GetValueById(int valueId)
     {
         var value = await _valueService.GetByIdAsync(valueId);
-        if (value is null)
-            return NotFound(new { message = "Customization value not found." });
-
         return Ok(value);
     }
 
     [HttpPost("options/{optionId}/values")]
     public async Task<IActionResult> AddValue(int optionId, [FromBody] CreateCustomizationValueDto dto)
     {
-        try
-        {
-            dto.CustomizationOptionId = optionId;
-            var result = await _valueService.CreateAsync(dto);
-            return Ok(result);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        dto.CustomizationOptionId = optionId;
+        var result = await _valueService.CreateAsync(dto);
+        return Ok(result);
     }
 
     [HttpPut("values/{valueId}")]
     public async Task<IActionResult> UpdateValue(int valueId, [FromBody] UpdateCustomizationValueDto dto)
     {
         var result = await _valueService.UpdateAsync(valueId, dto);
-        if (result is null)
-            return NotFound(new { message = "Customization value not found." });
-
         return Ok(result);
     }
 
     [HttpDelete("values/{valueId}")]
     public async Task<IActionResult> DeleteValue(int valueId)
     {
-        var deleted = await _valueService.DeleteAsync(valueId);
-        if (!deleted)
-            return NotFound(new { message = "Customization value not found." });
-
+        await _valueService.DeleteAsync(valueId);
         return NoContent();
     }
 
@@ -272,44 +200,28 @@ public class ProductsController : ControllerBase
     public async Task<IActionResult> GetImageById(int imageId)
     {
         var image = await _imageService.GetByIdAsync(imageId);
-        if (image is null)
-            return NotFound(new { message = "Product image not found." });
-
         return Ok(image);
     }
 
     [HttpPost("{productId}/images")]
     public async Task<IActionResult> AddImage(int productId, [FromBody] CreateProductImageDto dto)
     {
-        try
-        {
-            dto.ProductId = productId;
-            var result = await _imageService.CreateAsync(dto);
-            return Ok(result);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        dto.ProductId = productId;
+        var result = await _imageService.CreateAsync(dto);
+        return Ok(result);
     }
 
     [HttpPut("images/{imageId}")]
     public async Task<IActionResult> UpdateImage(int imageId, [FromBody] UpdateProductImageDto dto)
     {
         var result = await _imageService.UpdateAsync(imageId, dto);
-        if (result is null)
-            return NotFound(new { message = "Product image not found." });
-
         return Ok(result);
     }
 
     [HttpDelete("images/{imageId}")]
     public async Task<IActionResult> DeleteImage(int imageId)
     {
-        var deleted = await _imageService.DeleteAsync(imageId);
-        if (!deleted)
-            return NotFound(new { message = "Product image not found." });
-
+        await _imageService.DeleteAsync(imageId);
         return NoContent();
     }
 
@@ -326,44 +238,28 @@ public class ProductsController : ControllerBase
     public async Task<IActionResult> GetCustomizationImageById(int imageId)
     {
         var image = await _custImageService.GetByIdAsync(imageId);
-        if (image is null)
-            return NotFound(new { message = "Customization image not found." });
-
         return Ok(image);
     }
 
     [HttpPost("{productId}/customization-images")]
     public async Task<IActionResult> AddCustomizationImage(int productId, [FromBody] CreateCustomizationImageDto dto)
     {
-        try
-        {
-            dto.ProductId = productId;
-            var result = await _custImageService.CreateAsync(dto);
-            return Ok(result);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        dto.ProductId = productId;
+        var result = await _custImageService.CreateAsync(dto);
+        return Ok(result);
     }
 
     [HttpPut("customization-images/{imageId}")]
     public async Task<IActionResult> UpdateCustomizationImage(int imageId, [FromBody] UpdateCustomizationImageDto dto)
     {
         var result = await _custImageService.UpdateAsync(imageId, dto);
-        if (result is null)
-            return NotFound(new { message = "Customization image not found." });
-
         return Ok(result);
     }
 
     [HttpDelete("customization-images/{imageId}")]
     public async Task<IActionResult> DeleteCustomizationImage(int imageId)
     {
-        var deleted = await _custImageService.DeleteAsync(imageId);
-        if (!deleted)
-            return NotFound(new { message = "Customization image not found." });
-
+        await _custImageService.DeleteAsync(imageId);
         return NoContent();
     }
 }

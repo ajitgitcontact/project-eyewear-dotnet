@@ -1,5 +1,6 @@
 using backend.Data;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace backend.Controllers;
 
@@ -8,27 +9,27 @@ namespace backend.Controllers;
 public class DbTestController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly ILogger<DbTestController> _logger;
 
-    public DbTestController(AppDbContext context)
+    public DbTestController(AppDbContext context, ILogger<DbTestController> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     [HttpGet]
     public async Task<IActionResult> TestConnection()
     {
-        try
+        _logger.LogInformation("DB connectivity test requested.");
+
+        var canConnect = await _context.Database.CanConnectAsync();
+        if (!canConnect)
         {
-            var canConnect = await _context.Database.CanConnectAsync();
-            if (canConnect)
-            {
-                return Ok(new { status = "success", message = "Database connection is working." });
-            }
+            _logger.LogWarning("DB connectivity test failed.");
             return StatusCode(500, new { status = "failure", message = "Cannot connect to database." });
         }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { status = "error", message = ex.Message, inner = ex.InnerException?.Message });
-        }
+
+        _logger.LogInformation("DB connectivity test succeeded.");
+        return Ok(new { status = "success", message = "Database connection is working." });
     }
 }

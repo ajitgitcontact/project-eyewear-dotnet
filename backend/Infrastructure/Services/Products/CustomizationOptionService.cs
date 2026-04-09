@@ -1,11 +1,12 @@
+using backend.Application.Exceptions;
+using backend.Application.Abstractions.Products;
 using backend.Data;
 using backend.DTOs.CustomizationOptionDtos;
 using backend.Models.Products;
-using backend.Services.ProductsService.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace backend.Services.ProductsService.Services;
+namespace backend.Infrastructure.Services.Products;
 
 public class CustomizationOptionService : ICustomizationOptionService
 {
@@ -30,14 +31,14 @@ public class CustomizationOptionService : ICustomizationOptionService
         return options;
     }
 
-    public async Task<CustomizationOptionResponseDto?> GetByIdAsync(int id)
+    public async Task<CustomizationOptionResponseDto> GetByIdAsync(int id)
     {
         _logger.LogInformation("Fetching customization option by id. Input: OptionId={OptionId}", id);
         var option = await _context.CustomizationOptions.FindAsync(id);
         if (option is null)
         {
             _logger.LogInformation("Get customization option by id result. Input: OptionId={OptionId} => Output: Found=false", id);
-            return null;
+            throw new NotFoundException("Customization option not found.");
         }
         _logger.LogInformation("Get customization option by id result. Input: OptionId={OptionId} => Output: Found=true, Name='{Name}', ProductId={ProductId}", id, option.Name, option.ProductId);
         return MapToDto(option);
@@ -50,7 +51,7 @@ public class CustomizationOptionService : ICustomizationOptionService
         if (!productExists)
         {
             _logger.LogError("Create customization option blocked. Product not found. Input: ProductId={ProductId}", dto.ProductId);
-            throw new InvalidOperationException("Product not found.");
+            throw new NotFoundException("Product not found.");
         }
 
         var option = new CustomizationOption
@@ -68,14 +69,14 @@ public class CustomizationOptionService : ICustomizationOptionService
         return MapToDto(option);
     }
 
-    public async Task<CustomizationOptionResponseDto?> UpdateAsync(int id, UpdateCustomizationOptionDto dto)
+    public async Task<CustomizationOptionResponseDto> UpdateAsync(int id, UpdateCustomizationOptionDto dto)
     {
         _logger.LogInformation("Updating customization option. Input: OptionId={OptionId}, Name='{Name}', IsRequired={IsRequired}, DisplayOrder={DisplayOrder}", id, dto.Name, dto.IsRequired, dto.DisplayOrder);
         var option = await _context.CustomizationOptions.FindAsync(id);
         if (option is null)
         {
             _logger.LogInformation("Update customization option result. Input: OptionId={OptionId} => Output: Found=false", id);
-            return null;
+            throw new NotFoundException("Customization option not found.");
         }
 
         option.Name = dto.Name;
@@ -87,20 +88,19 @@ public class CustomizationOptionService : ICustomizationOptionService
         return MapToDto(option);
     }
 
-    public async Task<bool> DeleteAsync(int id)
+    public async Task DeleteAsync(int id)
     {
         _logger.LogInformation("Deleting customization option. Input: OptionId={OptionId}", id);
         var option = await _context.CustomizationOptions.FindAsync(id);
         if (option is null)
         {
             _logger.LogInformation("Delete customization option result. Input: OptionId={OptionId} => Output: Found=false, Deleted=false", id);
-            return false;
+            throw new NotFoundException("Customization option not found.");
         }
 
         _context.CustomizationOptions.Remove(option);
         await _context.SaveChangesAsync();
         _logger.LogInformation("Delete customization option result. Input: OptionId={OptionId}, Name='{Name}' => Output: Deleted=true", id, option.Name);
-        return true;
     }
 
     private static CustomizationOptionResponseDto MapToDto(CustomizationOption option)

@@ -1,10 +1,12 @@
+using backend.Application.Exceptions;
+using backend.Application.Abstractions.Users;
 using backend.Data;
 using backend.DTOs.UserDtos;
 using backend.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace backend.Services.UserService;
+namespace backend.Infrastructure.Services.Users;
 
 public class UserService : IUserService
 {
@@ -27,27 +29,27 @@ public class UserService : IUserService
         return users;
     }
 
-    public async Task<UserResponseDto?> GetUserByIdAsync(int id)
+    public async Task<UserResponseDto> GetUserByIdAsync(int id)
     {
         _logger.LogInformation("Fetching user by id. Input: UserId={UserId}", id);
         var user = await _context.Users.FindAsync(id);
         if (user is null)
         {
             _logger.LogInformation("Get user by id result. Input: UserId={UserId} => Output: Found=false", id);
-            return null;
+            throw new NotFoundException("User not found.");
         }
         _logger.LogInformation("Get user by id result. Input: UserId={UserId} => Output: Found=true, Email={Email}, Role={Role}", id, user.Email, user.UserRole);
         return MapToResponseDto(user);
     }
 
-    public async Task<UserResponseDto?> GetUserByEmailAsync(string email)
+    public async Task<UserResponseDto> GetUserByEmailAsync(string email)
     {
         _logger.LogInformation("Fetching user by email. Input: Email={Email}", email);
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
         if (user is null)
         {
             _logger.LogInformation("Get user by email result. Input: Email={Email} => Output: Found=false", email);
-            return null;
+            throw new NotFoundException("User not found.");
         }
         _logger.LogInformation("Get user by email result. Input: Email={Email} => Output: Found=true, UserId={UserId}, Role={Role}", email, user.Id, user.UserRole);
         return MapToResponseDto(user);
@@ -60,7 +62,7 @@ public class UserService : IUserService
         if (emailExists)
         {
             _logger.LogError("Create user blocked. Email already exists.");
-            throw new InvalidOperationException("A user with this email already exists.");
+            throw new ConflictException("A user with this email already exists.");
         }
 
         var user = new User
@@ -80,14 +82,14 @@ public class UserService : IUserService
         return MapToResponseDto(user);
     }
 
-    public async Task<UserResponseDto?> UpdateUserAsync(int id, UpdateUserDto dto)
+    public async Task<UserResponseDto> UpdateUserAsync(int id, UpdateUserDto dto)
     {
         _logger.LogInformation("Updating user. Input: UserId={UserId}, NewRole={Role}, IsActive={IsActive}", id, dto.UserRole, dto.IsActive);
         var user = await _context.Users.FindAsync(id);
         if (user is null)
         {
             _logger.LogInformation("Update user not found. UserId={UserId}", id);
-            return null;
+            throw new NotFoundException("User not found.");
         }
 
         if (user.Email != dto.Email)
@@ -96,7 +98,7 @@ public class UserService : IUserService
             if (emailTaken)
             {
                 _logger.LogError("Update user blocked. Email already exists. UserId={UserId}", id);
-                throw new InvalidOperationException("A user with this email already exists.");
+                throw new ConflictException("A user with this email already exists.");
             }
         }
 
@@ -112,30 +114,29 @@ public class UserService : IUserService
         return MapToResponseDto(user);
     }
 
-    public async Task<bool> DeleteUserAsync(int id)
+    public async Task DeleteUserAsync(int id)
     {
         _logger.LogInformation("Deleting user. Input: UserId={UserId}", id);
         var user = await _context.Users.FindAsync(id);
         if (user is null)
         {
             _logger.LogInformation("Delete user result. Input: UserId={UserId} => Output: Found=false, Deleted=false", id);
-            return false;
+            throw new NotFoundException("User not found.");
         }
 
         _context.Users.Remove(user);
         await _context.SaveChangesAsync();
         _logger.LogInformation("Delete user result. Input: UserId={UserId} => Output: Deleted=true", id);
-        return true;
     }
 
-    public async Task<UserResponseDto?> LoginAsync(LoginDto dto)
+    public async Task<UserResponseDto> LoginAsync(LoginDto dto)
     {
         _logger.LogInformation("Login attempt. Input: Email={Email}", dto.Email);
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
         if (user is null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
         {
             _logger.LogInformation("Login result. Input: Email={Email} => Output: Authenticated=false", dto.Email);
-            return null;
+            throw new UnauthorizedException("Invalid email or password.");
         }
 
         user.LastLoginAt = DateTime.UtcNow;

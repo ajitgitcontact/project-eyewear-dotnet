@@ -1,11 +1,12 @@
+using backend.Application.Exceptions;
+using backend.Application.Abstractions.Products;
 using backend.Data;
 using backend.DTOs.ProductImageDtos;
 using backend.Models.Products;
-using backend.Services.ProductsService.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace backend.Services.ProductsService.Services;
+namespace backend.Infrastructure.Services.Products;
 
 public class ProductImageService : IProductImageService
 {
@@ -30,14 +31,14 @@ public class ProductImageService : IProductImageService
         return images;
     }
 
-    public async Task<ProductImageResponseDto?> GetByIdAsync(int id)
+    public async Task<ProductImageResponseDto> GetByIdAsync(int id)
     {
         _logger.LogInformation("Fetching product image by id. Input: ImageId={ImageId}", id);
         var image = await _context.ProductImages.FindAsync(id);
         if (image is null)
         {
             _logger.LogInformation("Get product image by id result. Input: ImageId={ImageId} => Output: Found=false", id);
-            return null;
+            throw new NotFoundException("Product image not found.");
         }
         _logger.LogInformation("Get product image by id result. Input: ImageId={ImageId} => Output: Found=true, ProductId={ProductId}, IsPrimary={IsPrimary}, DisplayOrder={DisplayOrder}", id, image.ProductId, image.IsPrimary, image.DisplayOrder);
         return MapToDto(image);
@@ -50,7 +51,7 @@ public class ProductImageService : IProductImageService
         if (!productExists)
         {
             _logger.LogError("Create product image blocked. Product not found. Input: ProductId={ProductId}", dto.ProductId);
-            throw new InvalidOperationException("Product not found.");
+            throw new NotFoundException("Product not found.");
         }
 
         var image = new ProductImage
@@ -68,14 +69,14 @@ public class ProductImageService : IProductImageService
         return MapToDto(image);
     }
 
-    public async Task<ProductImageResponseDto?> UpdateAsync(int id, UpdateProductImageDto dto)
+    public async Task<ProductImageResponseDto> UpdateAsync(int id, UpdateProductImageDto dto)
     {
         _logger.LogInformation("Updating product image. Input: ImageId={ImageId}, IsPrimary={IsPrimary}, DisplayOrder={DisplayOrder}", id, dto.IsPrimary, dto.DisplayOrder);
         var image = await _context.ProductImages.FindAsync(id);
         if (image is null)
         {
             _logger.LogInformation("Update product image result. Input: ImageId={ImageId} => Output: Found=false", id);
-            return null;
+            throw new NotFoundException("Product image not found.");
         }
 
         image.ImageUrl = dto.ImageUrl;
@@ -87,20 +88,19 @@ public class ProductImageService : IProductImageService
         return MapToDto(image);
     }
 
-    public async Task<bool> DeleteAsync(int id)
+    public async Task DeleteAsync(int id)
     {
         _logger.LogInformation("Deleting product image. Input: ImageId={ImageId}", id);
         var image = await _context.ProductImages.FindAsync(id);
         if (image is null)
         {
             _logger.LogInformation("Delete product image result. Input: ImageId={ImageId} => Output: Found=false, Deleted=false", id);
-            return false;
+            throw new NotFoundException("Product image not found.");
         }
 
         _context.ProductImages.Remove(image);
         await _context.SaveChangesAsync();
         _logger.LogInformation("Delete product image result. Input: ImageId={ImageId}, ProductId={ProductId} => Output: Deleted=true", id, image.ProductId);
-        return true;
     }
 
     private static ProductImageResponseDto MapToDto(ProductImage image)

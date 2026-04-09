@@ -1,11 +1,12 @@
+using backend.Application.Exceptions;
+using backend.Application.Abstractions.Products;
 using backend.Data;
 using backend.DTOs.CustomizationValueDtos;
 using backend.Models.Products;
-using backend.Services.ProductsService.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace backend.Services.ProductsService.Services;
+namespace backend.Infrastructure.Services.Products;
 
 public class CustomizationValueService : ICustomizationValueService
 {
@@ -29,14 +30,14 @@ public class CustomizationValueService : ICustomizationValueService
         return values;
     }
 
-    public async Task<CustomizationValueResponseDto?> GetByIdAsync(int id)
+    public async Task<CustomizationValueResponseDto> GetByIdAsync(int id)
     {
         _logger.LogInformation("Fetching customization value by id. Input: ValueId={ValueId}", id);
         var value = await _context.CustomizationValues.FindAsync(id);
         if (value is null)
         {
             _logger.LogInformation("Get customization value by id result. Input: ValueId={ValueId} => Output: Found=false", id);
-            return null;
+            throw new NotFoundException("Customization value not found.");
         }
         _logger.LogInformation("Get customization value by id result. Input: ValueId={ValueId} => Output: Found=true, Value='{Value}', OptionId={OptionId}, AdditionalPrice={AdditionalPrice}", id, value.Value, value.CustomizationOptionId, value.AdditionalPrice);
         return MapToDto(value);
@@ -49,7 +50,7 @@ public class CustomizationValueService : ICustomizationValueService
         if (!optionExists)
         {
             _logger.LogError("Create customization value blocked. Option not found. Input: OptionId={OptionId}", dto.CustomizationOptionId);
-            throw new InvalidOperationException("Customization option not found.");
+            throw new NotFoundException("Customization option not found.");
         }
 
         var value = new CustomizationValue
@@ -66,14 +67,14 @@ public class CustomizationValueService : ICustomizationValueService
         return MapToDto(value);
     }
 
-    public async Task<CustomizationValueResponseDto?> UpdateAsync(int id, UpdateCustomizationValueDto dto)
+    public async Task<CustomizationValueResponseDto> UpdateAsync(int id, UpdateCustomizationValueDto dto)
     {
         _logger.LogInformation("Updating customization value. Input: ValueId={ValueId}, Value='{Value}', AdditionalPrice={AdditionalPrice}", id, dto.Value, dto.AdditionalPrice);
         var value = await _context.CustomizationValues.FindAsync(id);
         if (value is null)
         {
             _logger.LogInformation("Update customization value result. Input: ValueId={ValueId} => Output: Found=false", id);
-            return null;
+            throw new NotFoundException("Customization value not found.");
         }
 
         value.Value = dto.Value;
@@ -84,20 +85,19 @@ public class CustomizationValueService : ICustomizationValueService
         return MapToDto(value);
     }
 
-    public async Task<bool> DeleteAsync(int id)
+    public async Task DeleteAsync(int id)
     {
         _logger.LogInformation("Deleting customization value. Input: ValueId={ValueId}", id);
         var value = await _context.CustomizationValues.FindAsync(id);
         if (value is null)
         {
             _logger.LogInformation("Delete customization value result. Input: ValueId={ValueId} => Output: Found=false, Deleted=false", id);
-            return false;
+            throw new NotFoundException("Customization value not found.");
         }
 
         _context.CustomizationValues.Remove(value);
         await _context.SaveChangesAsync();
         _logger.LogInformation("Delete customization value result. Input: ValueId={ValueId}, Value='{Value}' => Output: Deleted=true", id, value.Value);
-        return true;
     }
 
     private static CustomizationValueResponseDto MapToDto(CustomizationValue value)

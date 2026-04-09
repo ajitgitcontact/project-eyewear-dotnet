@@ -29,6 +29,12 @@ ASP.NET Core Web API with Entity Framework Core and Supabase PostgreSQL for an e
 
 ```
 backend/
+├── Application/
+│   ├── Abstractions/
+│   │   ├── Users/                  # IUserService
+│   │   └── Products/               # Product and customization service interfaces
+│   ├── DependencyInjection/        # Application layer DI registration
+│   └── Exceptions/                 # App exceptions (NotFound/Conflict/etc.)
 ├── Controllers/                    # API controllers
 │   ├── ProductsController.cs       # Products CRUD + customization endpoints
 │   ├── UsersController.cs          # Users CRUD + login
@@ -47,15 +53,12 @@ backend/
 │   ├── User.cs
 │   └── Products/                   # Product, CustomizationOption, CustomizationValue,
 │                                   # ProductImage, CustomizationImage
-├── Services/
-│   ├── UserService/                # IUserService + UserService
-│   └── ProductsService/
-│       ├── Interfaces/             # IProductService, IProductBusinessService,
-│       │                           # ICustomizationOptionService, ICustomizationValueService,
-│       │                           # IProductImageService, ICustomizationImageService
-│       └── Services/               # Implementations for all interfaces
+├── Infrastructure/
+│   ├── DependencyInjection/        # Infrastructure DI (DbContext, provider setup)
+│   └── Services/
+│       ├── Users/                  # UserService implementation
+│       └── Products/               # Product and customization service implementations
 ├── Migrations/                     # EF Core migrations
-├── Tests/                          # ServiceTester (integration test runner)
 ├── wwwroot/images/products/        # Static product images
 ├── Program.cs                      # App entry point + DI configuration
 ├── .env                            # Environment variables (not in git)

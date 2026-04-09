@@ -1,9 +1,6 @@
-using backend.Data;
+using backend.Application.DependencyInjection;
+using backend.Infrastructure.DependencyInjection;
 using backend.Middleware;
-using backend.Services.UserService;
-using backend.Services.ProductsService.Interfaces;
-using backend.Services.ProductsService.Services;
-using Microsoft.EntityFrameworkCore;
 using Serilog;
 
 DotNetEnv.Env.Load();
@@ -16,22 +13,15 @@ builder.Host.UseSerilog((context, loggerConfiguration) =>
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<IProductService, ProductService>();
-builder.Services.AddScoped<ICustomizationOptionService, CustomizationOptionService>();
-builder.Services.AddScoped<ICustomizationValueService, CustomizationValueService>();
-builder.Services.AddScoped<IProductImageService, ProductImageService>();
-builder.Services.AddScoped<ICustomizationImageService, CustomizationImageService>();
-builder.Services.AddScoped<IProductBusinessService, ProductBusinessService>();
+builder.Services
+    .AddInfrastructureLayer(builder.Configuration)
+    .AddApplicationLayer();
 
 var app = builder.Build();
 
 app.UseMiddleware<CorrelationIdMiddleware>();
-app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseSerilogRequestLogging();
+app.UseMiddleware<GlobalExceptionMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {

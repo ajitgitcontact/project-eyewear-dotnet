@@ -1,11 +1,12 @@
+using backend.Application.Exceptions;
+using backend.Application.Abstractions.Products;
 using backend.Data;
 using backend.DTOs.CustomizationImageDtos;
 using backend.Models.Products;
-using backend.Services.ProductsService.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace backend.Services.ProductsService.Services;
+namespace backend.Infrastructure.Services.Products;
 
 public class CustomizationImageService : ICustomizationImageService
 {
@@ -29,14 +30,14 @@ public class CustomizationImageService : ICustomizationImageService
         return images;
     }
 
-    public async Task<CustomizationImageResponseDto?> GetByIdAsync(int id)
+    public async Task<CustomizationImageResponseDto> GetByIdAsync(int id)
     {
         _logger.LogInformation("Fetching customization image by id. Input: ImageId={ImageId}", id);
         var image = await _context.CustomizationImages.FindAsync(id);
         if (image is null)
         {
             _logger.LogInformation("Get customization image by id result. Input: ImageId={ImageId} => Output: Found=false", id);
-            return null;
+            throw new NotFoundException("Customization image not found.");
         }
         _logger.LogInformation("Get customization image by id result. Input: ImageId={ImageId} => Output: Found=true, ProductId={ProductId}, OptionId={OptionId}, ValueId={ValueId}", id, image.ProductId, image.CustomizationOptionId, image.CustomizationValueId);
         return MapToDto(image);
@@ -49,21 +50,21 @@ public class CustomizationImageService : ICustomizationImageService
         if (!productExists)
         {
             _logger.LogError("Create customization image blocked. Product not found. Input: ProductId={ProductId}", dto.ProductId);
-            throw new InvalidOperationException("Product not found.");
+            throw new NotFoundException("Product not found.");
         }
 
         var optionExists = await _context.CustomizationOptions.AnyAsync(co => co.CustomizationOptionId == dto.CustomizationOptionId);
         if (!optionExists)
         {
             _logger.LogError("Create customization image blocked. Option not found. Input: OptionId={OptionId}", dto.CustomizationOptionId);
-            throw new InvalidOperationException("Customization option not found.");
+            throw new NotFoundException("Customization option not found.");
         }
 
         var valueExists = await _context.CustomizationValues.AnyAsync(cv => cv.CustomizationValueId == dto.CustomizationValueId);
         if (!valueExists)
         {
             _logger.LogError("Create customization image blocked. Value not found. Input: ValueId={ValueId}", dto.CustomizationValueId);
-            throw new InvalidOperationException("Customization value not found.");
+            throw new NotFoundException("Customization value not found.");
         }
 
         var image = new CustomizationImage
@@ -81,14 +82,14 @@ public class CustomizationImageService : ICustomizationImageService
         return MapToDto(image);
     }
 
-    public async Task<CustomizationImageResponseDto?> UpdateAsync(int id, UpdateCustomizationImageDto dto)
+    public async Task<CustomizationImageResponseDto> UpdateAsync(int id, UpdateCustomizationImageDto dto)
     {
         _logger.LogInformation("Updating customization image. Input: ImageId={ImageId}", id);
         var image = await _context.CustomizationImages.FindAsync(id);
         if (image is null)
         {
             _logger.LogInformation("Update customization image result. Input: ImageId={ImageId} => Output: Found=false", id);
-            return null;
+            throw new NotFoundException("Customization image not found.");
         }
 
         image.ImageUrl = dto.ImageUrl;
@@ -98,20 +99,19 @@ public class CustomizationImageService : ICustomizationImageService
         return MapToDto(image);
     }
 
-    public async Task<bool> DeleteAsync(int id)
+    public async Task DeleteAsync(int id)
     {
         _logger.LogInformation("Deleting customization image. Input: ImageId={ImageId}", id);
         var image = await _context.CustomizationImages.FindAsync(id);
         if (image is null)
         {
             _logger.LogInformation("Delete customization image result. Input: ImageId={ImageId} => Output: Found=false, Deleted=false", id);
-            return false;
+            throw new NotFoundException("Customization image not found.");
         }
 
         _context.CustomizationImages.Remove(image);
         await _context.SaveChangesAsync();
         _logger.LogInformation("Delete customization image result. Input: ImageId={ImageId}, ProductId={ProductId}, OptionId={OptionId}, ValueId={ValueId} => Output: Deleted=true", id, image.ProductId, image.CustomizationOptionId, image.CustomizationValueId);
-        return true;
     }
 
     private static CustomizationImageResponseDto MapToDto(CustomizationImage image)

@@ -1,11 +1,12 @@
+using backend.Application.Exceptions;
+using backend.Application.Abstractions.Products;
 using backend.Data;
 using backend.DTOs.ProductDtos;
 using backend.Models.Products;
-using backend.Services.ProductsService.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace backend.Services.ProductsService.Services;
+namespace backend.Infrastructure.Services.Products;
 
 public class ProductService : IProductService
 {
@@ -28,27 +29,27 @@ public class ProductService : IProductService
         return products;
     }
 
-    public async Task<ProductResponseDto?> GetByIdAsync(int id)
+    public async Task<ProductResponseDto> GetByIdAsync(int id)
     {
         _logger.LogInformation("Fetching product by id. Input: ProductId={ProductId}", id);
         var product = await _context.Products.FindAsync(id);
         if (product is null)
         {
             _logger.LogInformation("Get product by id result. Input: ProductId={ProductId} => Output: Found=false", id);
-            return null;
+            throw new NotFoundException("Product not found.");
         }
         _logger.LogInformation("Get product by id result. Input: ProductId={ProductId} => Output: Found=true, SKU={Sku}, Name='{Name}'", id, product.SKU, product.Name);
         return MapToDto(product);
     }
 
-    public async Task<ProductResponseDto?> GetBySkuAsync(string sku)
+    public async Task<ProductResponseDto> GetBySkuAsync(string sku)
     {
         _logger.LogInformation("Fetching product by SKU. Input: SKU={Sku}", sku);
         var product = await _context.Products.FirstOrDefaultAsync(p => p.SKU == sku);
         if (product is null)
         {
             _logger.LogInformation("Get product by SKU result. Input: SKU={Sku} => Output: Found=false", sku);
-            return null;
+            throw new NotFoundException("Product not found.");
         }
         _logger.LogInformation("Get product by SKU result. Input: SKU={Sku} => Output: Found=true, ProductId={ProductId}, Name='{Name}'", sku, product.ProductId, product.Name);
         return MapToDto(product);
@@ -61,7 +62,7 @@ public class ProductService : IProductService
         if (skuExists)
         {
             _logger.LogError("Create product blocked. SKU already exists. SKU={Sku}", dto.SKU);
-            throw new InvalidOperationException("A product with this SKU already exists.");
+            throw new ConflictException("A product with this SKU already exists.");
         }
 
         var product = new Product
@@ -82,14 +83,14 @@ public class ProductService : IProductService
         return MapToDto(product);
     }
 
-    public async Task<ProductResponseDto?> UpdateAsync(int id, UpdateProductDto dto)
+    public async Task<ProductResponseDto> UpdateAsync(int id, UpdateProductDto dto)
     {
         _logger.LogInformation("Updating product. Input: ProductId={ProductId}, SKU={Sku}, Name='{Name}', IsActive={IsActive}", id, dto.SKU, dto.Name, dto.IsActive);
         var product = await _context.Products.FindAsync(id);
         if (product is null)
         {
             _logger.LogInformation("Update product not found. ProductId={ProductId}", id);
-            return null;
+            throw new NotFoundException("Product not found.");
         }
 
         if (product.SKU != dto.SKU)
@@ -98,7 +99,7 @@ public class ProductService : IProductService
             if (skuTaken)
             {
                 _logger.LogError("Update product blocked. SKU already exists. ProductId={ProductId}, SKU={Sku}", id, dto.SKU);
-                throw new InvalidOperationException("A product with this SKU already exists.");
+                throw new ConflictException("A product with this SKU already exists.");
             }
         }
 
@@ -116,20 +117,19 @@ public class ProductService : IProductService
         return MapToDto(product);
     }
 
-    public async Task<bool> DeleteAsync(int id)
+    public async Task DeleteAsync(int id)
     {
         _logger.LogInformation("Deleting product. Input: ProductId={ProductId}", id);
         var product = await _context.Products.FindAsync(id);
         if (product is null)
         {
             _logger.LogInformation("Delete product result. Input: ProductId={ProductId} => Output: Found=false, Deleted=false", id);
-            return false;
+            throw new NotFoundException("Product not found.");
         }
 
         _context.Products.Remove(product);
         await _context.SaveChangesAsync();
         _logger.LogInformation("Delete product result. Input: ProductId={ProductId}, SKU={Sku} => Output: Deleted=true", id, product.SKU);
-        return true;
     }
 
     private static ProductResponseDto MapToDto(Product product)
