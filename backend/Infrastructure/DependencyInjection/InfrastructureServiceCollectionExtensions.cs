@@ -1,4 +1,5 @@
 using backend.Data;
+using backend.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace backend.Infrastructure.DependencyInjection;
@@ -9,6 +10,8 @@ public static class InfrastructureServiceCollectionExtensions
     {
         services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+
+        services.AddScoped<DataSeeder>();
 
         return services;
     }

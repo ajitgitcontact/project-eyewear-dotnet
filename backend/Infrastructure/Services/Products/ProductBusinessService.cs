@@ -23,8 +23,8 @@ public class ProductBusinessService : IProductBusinessService
     public async Task<FullProductResponseDto> CreateFullProductAsync(CreateFullProductDto dto)
     {
         _logger.LogInformation(
-            "Starting full product creation. Input: SKU={Sku}, Name='{Name}', Brand={Brand}, Category={Category}, BasePrice={BasePrice}, InputImages={InputImageCount}, InputOptions={InputOptionCount}",
-            dto.SKU, dto.Name, dto.Brand, dto.Category, dto.BasePrice, dto.Images.Count, dto.CustomizationOptions.Count);
+            "Starting full product creation. Input: SKU={Sku}, Name='{Name}', Brand={Brand}, Category={Category}, BasePrice={BasePrice}, AvailableQuantity={AvailableQuantity}, SoldQuantity={SoldQuantity}, Priority={Priority}, InputImages={InputImageCount}, InputOptions={InputOptionCount}",
+            dto.SKU, dto.Name, dto.Brand, dto.Category, dto.BasePrice, dto.AvailableQuantity, dto.SoldQuantity, dto.Priority, dto.Images.Count, dto.CustomizationOptions.Count);
 
         // Validate SKU uniqueness
         var skuExists = await _context.Products.AnyAsync(p => p.SKU == dto.SKU);
@@ -49,6 +49,9 @@ public class ProductBusinessService : IProductBusinessService
                 Brand = dto.Brand,
                 Category = dto.Category,
                 BasePrice = dto.BasePrice,
+                AvailableQuantity = dto.AvailableQuantity,
+                SoldQuantity = dto.SoldQuantity,
+                Priority = dto.Priority,
                 HasPrescription = dto.HasPrescription,
                 CreatedAt = DateTime.UtcNow
             };
@@ -185,6 +188,9 @@ public class ProductBusinessService : IProductBusinessService
                 Brand = product.Brand,
                 Category = product.Category,
                 BasePrice = product.BasePrice,
+                AvailableQuantity = product.AvailableQuantity,
+                SoldQuantity = product.SoldQuantity,
+                Priority = product.Priority,
                 HasPrescription = product.HasPrescription,
                 IsActive = product.IsActive,
                 CreatedAt = product.CreatedAt,
@@ -247,6 +253,43 @@ public class ProductBusinessService : IProductBusinessService
         return products.Select(MapToFullDto);
     }
 
+    public async Task<IEnumerable<FullProductResponseDto>> GetAllFullProductsAsync(string sortOption)
+    {
+        // Normalize sort option
+        var normalizedSort = ProductSortOption.Normalize(sortOption);
+
+        _logger.LogInformation("Fetching all full products with sort option. SortOption={SortOption}", normalizedSort);
+
+        // Fetch all products with related data
+        var query = _context.Products
+            .Include(p => p.ProductImages.OrderBy(i => i.DisplayOrder))
+            .Include(p => p.CustomizationOptions.OrderBy(o => o.DisplayOrder))
+                .ThenInclude(o => o.CustomizationValues)
+            .Include(p => p.CustomizationImages)
+            .AsQueryable();
+
+        // Apply sorting before ToListAsync
+        query = ApplySorting(query, normalizedSort);
+
+        var products = await query.ToListAsync();
+
+        _logger.LogInformation("Fetched all full products. Output: Count={Count}, SortOption={SortOption}", products.Count, normalizedSort);
+
+        return products.Select(MapToFullDto);
+    }
+
+    private IQueryable<Product> ApplySorting(IQueryable<Product> query, string sortOption)
+    {
+        return sortOption switch
+        {
+            ProductSortOption.PriceAscending => query.OrderBy(p => p.BasePrice),
+            ProductSortOption.PriceDescending => query.OrderByDescending(p => p.BasePrice),
+            ProductSortOption.Popularity => query.OrderByDescending(p => p.SoldQuantity),
+            ProductSortOption.Newest => query.OrderByDescending(p => p.CreatedAt),
+            ProductSortOption.Default or _ => query.OrderBy(p => p.Priority).ThenByDescending(p => p.CreatedAt),
+        };
+    }
+
     private static FullProductResponseDto MapToFullDto(Product product)
     {
         // Group customization images by (OptionId, ValueId) for nesting
@@ -274,6 +317,9 @@ public class ProductBusinessService : IProductBusinessService
             Brand = product.Brand,
             Category = product.Category,
             BasePrice = product.BasePrice,
+            AvailableQuantity = product.AvailableQuantity,
+            SoldQuantity = product.SoldQuantity,
+            Priority = product.Priority,
             HasPrescription = product.HasPrescription,
             IsActive = product.IsActive,
             CreatedAt = product.CreatedAt,

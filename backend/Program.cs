@@ -1,5 +1,6 @@
 using backend.Application.DependencyInjection;
 using backend.Infrastructure.DependencyInjection;
+using backend.Infrastructure.Services;
 using backend.Middleware;
 using Serilog;
 
@@ -22,6 +23,16 @@ var app = builder.Build();
 app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseSerilogRequestLogging();
 app.UseMiddleware<GlobalExceptionMiddleware>();
+
+// Seed initial data in development
+if (app.Environment.IsDevelopment())
+{
+    using (var scope = app.Services.CreateScope())
+    {
+        var seeder = scope.ServiceProvider.GetRequiredService<DataSeeder>();
+        await seeder.SeedProductsAsync();
+    }
+}
 
 if (app.Environment.IsDevelopment())
 {

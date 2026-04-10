@@ -9,6 +9,9 @@ public class ProductResponseDto
     public string? Brand { get; set; }
     public string Category { get; set; } = string.Empty;
     public decimal BasePrice { get; set; }
+    public int AvailableQuantity { get; set; }
+    public int SoldQuantity { get; set; }
+    public int Priority { get; set; }
     public bool HasPrescription { get; set; }
     public bool IsActive { get; set; }
     public DateTime CreatedAt { get; set; }

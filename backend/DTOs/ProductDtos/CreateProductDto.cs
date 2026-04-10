@@ -25,5 +25,14 @@ public class CreateProductDto
     [Range(0.01, double.MaxValue)]
     public decimal BasePrice { get; set; }
 
+    [Range(0, int.MaxValue)]
+    public int AvailableQuantity { get; set; } = 0;
+
+    [Range(0, int.MaxValue)]
+    public int SoldQuantity { get; set; } = 0;
+
+    [Range(0, int.MaxValue)]
+    public int Priority { get; set; } = 0;
+
     public bool HasPrescription { get; set; }
 }

@@ -31,6 +31,12 @@ public class Product
     [Column(TypeName = "decimal(10,2)")]
     public decimal BasePrice { get; set; }
 
+    public int AvailableQuantity { get; set; } = 0;
+
+    public int SoldQuantity { get; set; } = 0;
+
+    public int Priority { get; set; } = 0;
+
     public bool HasPrescription { get; set; }
 
     public bool IsActive { get; set; } = true;

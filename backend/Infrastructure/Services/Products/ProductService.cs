@@ -57,7 +57,7 @@ public class ProductService : IProductService
 
     public async Task<ProductResponseDto> CreateAsync(CreateProductDto dto)
     {
-        _logger.LogInformation("Creating product. Input: SKU={Sku}, Name='{Name}', Brand={Brand}, Category={Category}, BasePrice={BasePrice}", dto.SKU, dto.Name, dto.Brand, dto.Category, dto.BasePrice);
+        _logger.LogInformation("Creating product. Input: SKU={Sku}, Name='{Name}', Brand={Brand}, Category={Category}, BasePrice={BasePrice}, AvailableQuantity={AvailableQuantity}, SoldQuantity={SoldQuantity}, Priority={Priority}", dto.SKU, dto.Name, dto.Brand, dto.Category, dto.BasePrice, dto.AvailableQuantity, dto.SoldQuantity, dto.Priority);
         var skuExists = await _context.Products.AnyAsync(p => p.SKU == dto.SKU);
         if (skuExists)
         {
@@ -73,6 +73,9 @@ public class ProductService : IProductService
             Brand = dto.Brand,
             Category = dto.Category,
             BasePrice = dto.BasePrice,
+            AvailableQuantity = dto.AvailableQuantity,
+            SoldQuantity = dto.SoldQuantity,
+            Priority = dto.Priority,
             HasPrescription = dto.HasPrescription,
             CreatedAt = DateTime.UtcNow
         };
@@ -85,7 +88,7 @@ public class ProductService : IProductService
 
     public async Task<ProductResponseDto> UpdateAsync(int id, UpdateProductDto dto)
     {
-        _logger.LogInformation("Updating product. Input: ProductId={ProductId}, SKU={Sku}, Name='{Name}', IsActive={IsActive}", id, dto.SKU, dto.Name, dto.IsActive);
+        _logger.LogInformation("Updating product. Input: ProductId={ProductId}, SKU={Sku}, Name='{Name}', AvailableQuantity={AvailableQuantity}, SoldQuantity={SoldQuantity}, Priority={Priority}, IsActive={IsActive}", id, dto.SKU, dto.Name, dto.AvailableQuantity, dto.SoldQuantity, dto.Priority, dto.IsActive);
         var product = await _context.Products.FindAsync(id);
         if (product is null)
         {
@@ -109,6 +112,9 @@ public class ProductService : IProductService
         product.Brand = dto.Brand;
         product.Category = dto.Category;
         product.BasePrice = dto.BasePrice;
+        product.AvailableQuantity = dto.AvailableQuantity;
+        product.SoldQuantity = dto.SoldQuantity;
+        product.Priority = dto.Priority;
         product.HasPrescription = dto.HasPrescription;
         product.IsActive = dto.IsActive;
 
@@ -143,6 +149,9 @@ public class ProductService : IProductService
             Brand = product.Brand,
             Category = product.Category,
             BasePrice = product.BasePrice,
+            AvailableQuantity = product.AvailableQuantity,
+            SoldQuantity = product.SoldQuantity,
+            Priority = product.Priority,
             HasPrescription = product.HasPrescription,
             IsActive = product.IsActive,
             CreatedAt = product.CreatedAt,

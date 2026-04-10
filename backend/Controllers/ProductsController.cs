@@ -65,13 +65,25 @@ public class ProductsController : ControllerBase
 
     /// <summary>
     /// Get all products with full nested data.
+    /// Supported sort options: "price_asc" (low to high), "price_desc" (high to low), 
+    /// "popularity" (by sold quantity), "newest" (by created date), "default" (by priority).
+    /// Default sort is "default" (by priority).
     /// </summary>
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll([FromQuery] string? sort = "default")
     {
-        _logger.LogInformation("GetAll products request received.");
-        var products = await _businessService.GetAllFullProductsAsync();
-        _logger.LogInformation("GetAll products succeeded.");
+        _logger.LogInformation("GetAll products request received. Sort={Sort}", sort);
+        
+        // Validate sort option
+        if (!ProductSortOption.IsValid(sort))
+        {
+            _logger.LogWarning("GetAll products called with invalid sort option. Sort={Sort}", sort);
+            return BadRequest(new { message = "Invalid sort option. Valid options: price_asc, price_desc, popularity, newest, default" });
+        }
+
+        var normalizedSort = ProductSortOption.Normalize(sort);
+        var products = await _businessService.GetAllFullProductsAsync(normalizedSort);
+        _logger.LogInformation("GetAll products succeeded. Sort={Sort}, Count={Count}", normalizedSort, products.Count());
         return Ok(products);
     }
 
