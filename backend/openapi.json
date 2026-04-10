@@ -57,9 +57,42 @@
         "tags": [
           "Products"
         ],
+        "summary": "Get all products with optional sorting",
+        "description": "Retrieves all products with nested customization options, values, and images. Supports sorting by price, popularity (sold quantity), creation date, or priority.",
+        "parameters": [
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sort option for products. Valid values: 'price_asc' (low to high), 'price_desc' (high to low), 'popularity' (by sold quantity), 'newest' (by created date), 'default' (by priority, default if not specified)",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "price_asc",
+                "price_desc",
+                "popularity",
+                "newest",
+                "default"
+              ],
+              "default": "default"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "List of products sorted according to the specified sort option",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FullProductResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid sort option provided"
           }
         }
       }

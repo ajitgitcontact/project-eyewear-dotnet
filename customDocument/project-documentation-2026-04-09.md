@@ -387,6 +387,122 @@ CreateAsync({ProductId, OptionId, ValueId, ImageUrl})
 
 ---
 
+### 3.8 DataSeeder (Added Apr 10, 2026)
+
+**File:** `backend/Infrastructure/Services/DataSeeder.cs`
+
+**Purpose:** Automatically seed 20 dummy products in development environment for testing sorting and API functionality.
+
+**Dependency Injection:**
+```csharp
+private readonly AppDbContext _context;
+private readonly ILogger<DataSeeder> _logger;
+```
+
+**Methods:**
+
+| Method | Signature | Logic | Logging |
+|--------|-----------|-------|---------|
+| **SeedProductsAsync** | `Task` | Checks product count; clears existing products if < 20; generates and inserts 20 dummy products | Input: none; Output: Count={seeded_count} |
+| **GenerateDummyProducts** | `List<Product>` | Creates 20 Product records with: RandomVarying prices ($102-$935), varying sold quantities (0-197), priorities (0-4), spread creation dates (last 20 days) | Output: List<Product> with 20 items |
+
+**Seeding Logic:**
+```
+SeedProductsAsync
+  ├─ Count existing products
+  ├─ if (count >= 20)
+  │   └─ Log "Products already exist. Skipping seeding." → return
+  ├─ if (count > 0 && count < 20)
+  │   └─ Log "Clearing {count} existing products for fresh seeding."
+  │       └─ Delete all products (cascades CustomizationOptions, ProductImages, CustomizationImages)
+  ├─ GenerateDummyProducts() → List<Product>
+  │   └─ For each of 20 products:
+  │       ├─ SKU = "PRD-{i:D6}" (e.g., "PRD-000001")
+  │       ├─ Name = cycling through predefined names (Classic Black, Summer Blue, etc.)
+  │       ├─ Brand = random from list (Ray-Ban, Aviator, Oakley, Prada, Gucci, Versace, Calvin Klein, Fossil)
+  │       ├─ Category = random from list (Sunglasses, Reading Glasses, Fashion, Sports, Vintage)
+  │       ├─ BasePrice = random decimal $99-$999 + random cents
+  │       ├─ AvailableQuantity = random 5-100
+  │       ├─ SoldQuantity = random 0-200 (for popularity testing)
+  │       ├─ Priority = (i-1) % 5 (cycles 0-4 for priority distribution)
+  │       ├─ CreatedAt = now - (20-i) days (spreads over last 20 days for newest sort testing)
+  │       └─ HasPrescription = random boolean
+  ├─ AddRangeAsync(products)
+  ├─ SaveChangesAsync()
+  └─ Log "Successfully seeded {count} products."
+```
+
+**Integration with Program.cs:**
+```csharp
+// In Program.cs, during app startup in Development environment:
+if (app.Environment.IsDevelopment())
+{
+    using (var scope = app.Services.CreateScope())
+    {
+        var seeder = scope.ServiceProvider.GetRequiredService<DataSeeder>();
+        await seeder.SeedProductsAsync();
+    }
+}
+```
+
+**DI Registration (in InfrastructureServiceCollectionExtensions.cs):**
+```csharp
+services.AddScoped<DataSeeder>();
+```
+
+---
+
+### 3.9 ProductSortOption (Added Apr 10, 2026)
+
+**File:** `backend/Application/Abstractions/Products/ProductSortOption.cs`
+
+**Purpose:** Centralized constants and validation logic for product sorting options.
+
+**Static Members:**
+
+| Member | Type | Value | Description |
+|--------|------|-------|-------------|
+| PriceAscending | const string | "price_asc" | Sort by BasePrice ascending |
+| PriceDescending | const string | "price_desc" | Sort by BasePrice descending |
+| Popularity | const string | "popularity" | Sort by SoldQuantity descending |
+| Newest | const string | "newest" | Sort by CreatedAt descending |
+| Default | const string | "default" | Sort by Priority ascending |
+| ValidOptions | HashSet<string> | {price_asc, price_desc, popularity, newest, default} | All valid sort options |
+
+**Static Methods:**
+
+| Method | Signature | Purpose | Returns |
+|--------|-----------|---------|---------|
+| **IsValid** | `bool (string? sortOption)` | Validates if sort option is in ValidOptions set | true/false |
+| **Normalize** | `string (string? sortOption)` | Converts to lowercase, returns Default if null/empty | normalized string |
+
+**Usage in Controller:**
+```csharp
+if (!ProductSortOption.IsValid(sort))
+{
+    return BadRequest(new { message = "Invalid sort option..." });
+}
+var normalizedSort = ProductSortOption.Normalize(sort);
+var products = await _businessService.GetAllFullProductsAsync(normalizedSort);
+```
+
+**Usage in Service:**
+```csharp
+private IQueryable<Product> ApplySorting(IQueryable<Product> query, string sortOption)
+{
+    return sortOption switch
+    {
+        ProductSortOption.PriceAscending => query.OrderBy(p => p.BasePrice),
+        ProductSortOption.PriceDescending => query.OrderByDescending(p => p.BasePrice),
+        ProductSortOption.Popularity => query.OrderByDescending(p => p.SoldQuantity),
+        ProductSortOption.Newest => query.OrderByDescending(p => p.CreatedAt),
+        ProductSortOption.Default or _ => query.OrderBy(p => p.Priority).ThenByDescending(p => p.CreatedAt),
+    };
+}
+```
+
+---
+
 ## 4. Controllers
 
 ### 4.1 UsersController
@@ -534,12 +650,34 @@ private readonly ILogger<ProductsController> _logger;
 
 | HTTP Method | Route | Method | Request/Response | Status Codes |
 |---|---|---|---|---|
-| GET | `/api/products` | GetAllProductsAsync | Response: `List<ProductResponseDto>` | 200, 500 |
-| GET | `/api/products/{id}` | GetProductByIdAsync | Response: `ProductResponseDto` | 200, 404, 500 |
+| GET | `/api/products` | GetAllProductsAsync | Query: `?sort={option}` Response: `List<FullProductResponseDto>` | 200, 400, 500 |
+| GET | `/api/products/{id}` | GetProductByIdAsync | Response: `FullProductResponseDto` | 200, 404, 500 |
 | GET | `/api/products/sku/{sku}` | GetProductBySkuAsync | Response: `ProductResponseDto` | 200, 404, 500 |
 | POST | `/api/products` | CreateFullProductAsync | Request: `CreateFullProductDto` | 201, 400, 409, 500 |
 | PUT | `/api/products/{id}` | UpdateProductAsync | Request: `UpdateProductDto` | 200, 404, 500 |
 | DELETE | `/api/products/{id}` | DeleteProductAsync | Response: 204 No Content | 204, 404, 500 |
+
+**GET /api/products Sorting Feature (Added Apr 10, 2026):**
+- **Query Parameter:** `sort` (string, optional, defaults to "default")
+- **Valid Sort Options:**
+  - `price_asc` — Ascending by BasePrice (low to high)
+  - `price_desc` — Descending by BasePrice (high to low)
+  - `popularity` — Descending by SoldQuantity (most sold first)
+  - `newest` — Descending by CreatedAt (newest first)
+  - `default` — Ascending by Priority, then descending by CreatedAt
+- **Error Handling:**
+  - 400 Bad Request if invalid sort option provided
+  - Response includes helpful error message listing valid options
+- **Logging:**
+  - Input: SortOption={option}
+  - Output: Count={count}, SortOption={normalized_option}
+- **Implementation:**
+  - Query parameter validated via `ProductSortOption.IsValid()` in controller
+  - Sort applied at database level in `ApplySorting()` method in service
+  - Returns `IEnumerable<FullProductResponseDto>` with sorted results
+- **Service Methods:**
+  - Overloaded: `GetAllFullProductsAsync()` (no sort params, defaults to default)
+  - Overloaded: `GetAllFullProductsAsync(string sortOption)` (with sort parameter)
 
 ---
 

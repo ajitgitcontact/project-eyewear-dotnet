@@ -1,6 +1,51 @@
 @backend_HostAddress = http://localhost:5047
 
+# Database Connection Test
 GET {{backend_HostAddress}}/api/dbtest
+Accept: application/json
+
+###
+
+# Products API - Sorting Examples
+
+# Default sort (by Priority)
+GET {{backend_HostAddress}}/api/products
+Accept: application/json
+
+###
+
+# Price: Low to High
+GET {{backend_HostAddress}}/api/products?sort=price_asc
+Accept: application/json
+
+###
+
+# Price: High to Low
+GET {{backend_HostAddress}}/api/products?sort=price_desc
+Accept: application/json
+
+###
+
+# Popularity (by Sold Quantity - descending)
+GET {{backend_HostAddress}}/api/products?sort=popularity
+Accept: application/json
+
+###
+
+# What's New (by Created Date - descending)
+GET {{backend_HostAddress}}/api/products?sort=newest
+Accept: application/json
+
+###
+
+# Get Single Product by ID
+GET {{backend_HostAddress}}/api/products/1
+Accept: application/json
+
+###
+
+# Get Product by SKU
+GET {{backend_HostAddress}}/api/products/sku/PRD-000001
 Accept: application/json
 
 ###

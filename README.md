@@ -161,11 +161,41 @@ Open [http://localhost:5047/swagger](http://localhost:5047/swagger) for interact
 | Method | Endpoint | Description |
 |---|---|---|
 | `POST` | `/api/products` | Create full product with customizations & images |
-| `GET` | `/api/products` | Get all products (with nested data) |
+| `GET` | `/api/products` | Get all products (with nested data) - supports sorting |
 | `GET` | `/api/products/{id}` | Get product by ID (with nested data) |
 | `GET` | `/api/products/sku/{sku}` | Get product by SKU |
 | `PUT` | `/api/products/{id}` | Update product details |
 | `DELETE` | `/api/products/{id}` | Delete product (cascades all related data) |
+
+#### Products Sorting
+
+The **GET `/api/products`** endpoint supports sorting via the `sort` query parameter:
+
+| Sort Option | Query Parameter | Behavior |
+|---|---|---|
+| **Price: Low to High** | `?sort=price_asc` | Ascending by base price (cheapest first) |
+| **Price: High to Low** | `?sort=price_desc` | Descending by base price (expensive first) |
+| **Popularity** | `?sort=popularity` | Descending by sold quantity (most sold first) |
+| **What's New** | `?sort=newest` | Descending by created date (newest products first) |
+| **Default** | `?sort=default` or no parameter | Ascending by priority column (featured products first) |
+
+##### Example Requests:
+
+```bash
+# Default sort (by priority)
+GET /api/products
+GET /api/products?sort=default
+
+# Price sorting
+GET /api/products?sort=price_asc       # Lowest price first
+GET /api/products?sort=price_desc      # Highest price first
+
+# Popularity
+GET /api/products?sort=popularity      # Most sold first
+
+# What's new
+GET /api/products?sort=newest          # Newest products first
+```
 
 ### Customization Options API
 
