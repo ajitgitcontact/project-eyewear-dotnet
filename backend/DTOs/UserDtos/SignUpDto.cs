@@ -1,9 +1,8 @@
 using System.ComponentModel.DataAnnotations;
-using backend.Constants;
 
 namespace backend.DTOs.UserDtos;
 
-public class CreateUserDto
+public class SignUpDto
 {
     [Required]
     [MaxLength(100)]
@@ -25,7 +24,4 @@ public class CreateUserDto
     [Required]
     [MinLength(8)]
     public string Password { get; set; } = string.Empty;
-
-    [MaxLength(50)]
-    public string UserRole { get; set; } = Roles.Customer;
 }

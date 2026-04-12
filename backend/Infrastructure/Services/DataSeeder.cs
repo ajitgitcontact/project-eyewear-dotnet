@@ -1,4 +1,6 @@
+using backend.Constants;
 using backend.Data;
+using backend.Models;
 using backend.Models.Products;
 using Microsoft.EntityFrameworkCore;
 
@@ -91,5 +93,49 @@ public class DataSeeder
         }
 
         return products;
+    }
+
+    /// <summary>
+    /// Seeds a default SUPER_ADMIN user if no users exist in the database.
+    /// Only runs in Development. Credentials are logged to console on first run.
+    /// </summary>
+    public async Task SeedSuperAdminAsync()
+    {
+        try
+        {
+            var adminExists = await _context.Users
+                .AnyAsync(u => u.UserRole == Roles.SuperAdmin);
+            if (adminExists)
+            {
+                _logger.LogInformation("SuperAdmin already exists. Skipping SuperAdmin seeding.");
+                return;
+            }
+
+            const string defaultEmail = "superadmin@eyewear.dev";
+            const string defaultPassword = "SuperAdmin@2026!";
+
+            var admin = new User
+            {
+                FirstName = "Super",
+                LastName = "Admin",
+                Email = defaultEmail,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(defaultPassword),
+                UserRole = Roles.SuperAdmin,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.Users.Add(admin);
+            await _context.SaveChangesAsync();
+
+            _logger.LogWarning(
+                "DEV ONLY: Seeded default SUPER_ADMIN. Email={Email} Password={Password} — Change before going to production!",
+                defaultEmail, defaultPassword);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred while seeding the SuperAdmin user.");
+            throw;
+        }
     }
 }

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using backend.Constants;
 
 namespace backend.DTOs.UserDtos;
 
@@ -22,7 +23,7 @@ public class UpdateUserDto
     public string? ContactNumber { get; set; }
 
     [MaxLength(50)]
-    public string UserRole { get; set; } = "Customer";
+    public string UserRole { get; set; } = Roles.Customer;
 
     public bool IsActive { get; set; } = true;
 }

@@ -1,7 +1,59 @@
 @backend_HostAddress = http://localhost:5047
+@customerEmail = customer1@eyewear.dev
+@customerPassword = Customer@12345
+@adminEmail = admin1@eyewear.dev
+@adminPassword = Admin@12345
+
+# ------------------------------
+# AUTH API
+# ------------------------------
+
+# Customer Sign Up (always creates CUSTOMER role)
+POST {{backend_HostAddress}}/api/auth/signup
+Content-Type: application/json
+
+{
+	"firstName": "New",
+	"lastName": "Customer",
+	"email": "new.customer+{{$timestamp}}@eyewear.dev",
+	"password": "Customer@12345",
+	"contactNumber": "9191919191"
+}
+
+###
+
+# Login as Customer
+POST {{backend_HostAddress}}/api/users/login
+Content-Type: application/json
+
+{
+	"email": "{{customerEmail}}",
+	"password": "{{customerPassword}}"
+}
+
+###
+
+# Login as Admin
+POST {{backend_HostAddress}}/api/users/login
+Content-Type: application/json
+
+{
+	"email": "{{adminEmail}}",
+	"password": "{{adminPassword}}"
+}
+
+###
 
 # Database Connection Test
 GET {{backend_HostAddress}}/api/dbtest
+Accept: application/json
+
+###
+
+# Protected Example (requires Bearer token)
+# Replace <TOKEN> with token from login response.
+GET {{backend_HostAddress}}/api/users
+Authorization: Bearer <TOKEN>
 Accept: application/json
 
 ###

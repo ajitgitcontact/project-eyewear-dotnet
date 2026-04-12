@@ -44,21 +44,23 @@ public class UserService : IUserService
 
     public async Task<UserResponseDto> GetUserByEmailAsync(string email)
     {
-        _logger.LogInformation("Fetching user by email. Input: Email={Email}", email);
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+        var normalizedEmail = NormalizeEmail(email);
+        _logger.LogInformation("Fetching user by email. Input: Email={Email}", normalizedEmail);
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == normalizedEmail);
         if (user is null)
         {
-            _logger.LogInformation("Get user by email result. Input: Email={Email} => Output: Found=false", email);
+            _logger.LogInformation("Get user by email result. Input: Email={Email} => Output: Found=false", normalizedEmail);
             throw new NotFoundException("User not found.");
         }
-        _logger.LogInformation("Get user by email result. Input: Email={Email} => Output: Found=true, UserId={UserId}, Role={Role}", email, user.Id, user.UserRole);
+        _logger.LogInformation("Get user by email result. Input: Email={Email} => Output: Found=true, UserId={UserId}, Role={Role}", normalizedEmail, user.Id, user.UserRole);
         return MapToResponseDto(user);
     }
 
     public async Task<UserResponseDto> CreateUserAsync(CreateUserDto dto)
     {
+        var normalizedEmail = NormalizeEmail(dto.Email);
         _logger.LogInformation("Creating user. Input: Name='{FirstName} {LastName}', Role={Role}", dto.FirstName, dto.LastName, dto.UserRole);
-        var emailExists = await _context.Users.AnyAsync(u => u.Email == dto.Email);
+        var emailExists = await _context.Users.AnyAsync(u => u.Email.ToLower() == normalizedEmail);
         if (emailExists)
         {
             _logger.LogError("Create user blocked. Email already exists.");
@@ -69,7 +71,7 @@ public class UserService : IUserService
         {
             FirstName = dto.FirstName,
             LastName = dto.LastName,
-            Email = dto.Email,
+            Email = normalizedEmail,
             ContactNumber = dto.ContactNumber,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
             UserRole = dto.UserRole,
@@ -92,9 +94,11 @@ public class UserService : IUserService
             throw new NotFoundException("User not found.");
         }
 
-        if (user.Email != dto.Email)
+        var normalizedEmail = NormalizeEmail(dto.Email);
+
+        if (!string.Equals(user.Email, normalizedEmail, StringComparison.OrdinalIgnoreCase))
         {
-            var emailTaken = await _context.Users.AnyAsync(u => u.Email == dto.Email);
+            var emailTaken = await _context.Users.AnyAsync(u => u.Email.ToLower() == normalizedEmail);
             if (emailTaken)
             {
                 _logger.LogError("Update user blocked. Email already exists. UserId={UserId}", id);
@@ -104,7 +108,7 @@ public class UserService : IUserService
 
         user.FirstName = dto.FirstName;
         user.LastName = dto.LastName;
-        user.Email = dto.Email;
+        user.Email = normalizedEmail;
         user.ContactNumber = dto.ContactNumber;
         user.UserRole = dto.UserRole;
         user.IsActive = dto.IsActive;
@@ -131,18 +135,24 @@ public class UserService : IUserService
 
     public async Task<UserResponseDto> LoginAsync(LoginDto dto)
     {
-        _logger.LogInformation("Login attempt. Input: Email={Email}", dto.Email);
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
+        var normalizedEmail = NormalizeEmail(dto.Email);
+        _logger.LogInformation("Login attempt. Input: Email={Email}", normalizedEmail);
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == normalizedEmail);
         if (user is null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
         {
-            _logger.LogInformation("Login result. Input: Email={Email} => Output: Authenticated=false", dto.Email);
+            _logger.LogInformation("Login result. Input: Email={Email} => Output: Authenticated=false", normalizedEmail);
             throw new UnauthorizedException("Invalid email or password.");
         }
 
         user.LastLoginAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
-        _logger.LogInformation("Login result. Input: Email={Email} => Output: Authenticated=true, UserId={UserId}, Role={Role}", dto.Email, user.Id, user.UserRole);
+        _logger.LogInformation("Login result. Input: Email={Email} => Output: Authenticated=true, UserId={UserId}, Role={Role}", normalizedEmail, user.Id, user.UserRole);
         return MapToResponseDto(user);
+    }
+
+    private static string NormalizeEmail(string email)
+    {
+        return email.Trim().ToLowerInvariant();
     }
 
     private static UserResponseDto MapToResponseDto(User user)

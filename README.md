@@ -103,6 +103,17 @@ Edit `backend/.env` with your database connection string:
 ConnectionStrings__DefaultConnection=Host=<POOLER_HOST>;Port=5432;Database=postgres;Username=<USERNAME>;Password=<PASSWORD>;SSL Mode=Require;Trust Server Certificate=true
 ```
 
+Add JWT settings in `backend/.env` (required for authentication):
+
+```
+JWT__Key=<YOUR_LONG_RANDOM_SECRET>
+JWT__Issuer=EyewearApi
+JWT__Audience=EyewearApiUsers
+JWT__ExpireMinutes=60
+```
+
+Use a strong key with at least 32 characters.
+
 **Supabase connection tips:**
 - Go to your Supabase project → **Settings → Database → Connection String**
 - If you're on an **IPv4 network**, use the **Session Pooler** connection (not direct)
@@ -148,24 +159,58 @@ Open [http://localhost:5047/swagger](http://localhost:5047/swagger) for interact
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/api/users` | Get all users |
-| `GET` | `/api/users/{id}` | Get user by ID |
-| `GET` | `/api/users/email/{email}` | Get user by email |
-| `POST` | `/api/users` | Create a new user |
+| `GET` | `/api/users` | Get all users (ADMIN, SUPER_ADMIN) |
+| `GET` | `/api/users/{id}` | Get user by ID (ADMIN/SUPER_ADMIN or owner) |
+| `GET` | `/api/users/email/{email}` | Get user by email (ADMIN, SUPER_ADMIN) |
+| `POST` | `/api/users` | Create a new user (public CUSTOMER signup, admin can create any role) |
 | `POST` | `/api/users/login` | Login (email + password) |
-| `PUT` | `/api/users/{id}` | Update a user |
-| `DELETE` | `/api/users/{id}` | Delete a user |
+| `PUT` | `/api/users/{id}` | Update a user (ADMIN/SUPER_ADMIN or owner, no customer role escalation) |
+| `DELETE` | `/api/users/{id}` | Delete a user (ADMIN, SUPER_ADMIN) |
+
+### Auth API
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/api/auth/signup` | Customer signup endpoint (always creates CUSTOMER role) |
+
+#### Login/Signup Response
+
+Authentication endpoints return:
+
+```json
+{
+  "token": "<jwt-token>",
+  "role": "CUSTOMER"
+}
+```
+
+JWT token contains these claims:
+- `NameIdentifier` (User Id)
+- `Email`
+- `Role`
+
+Token expiry is set to 1 hour.
+
+#### Role Constants
+
+- `SUPER_ADMIN`
+- `ADMIN`
+- `CUSTOMER`
+
+#### Ownership Rule
+
+For user profile endpoints, CUSTOMER can access only their own user record.
 
 ### Products API
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `POST` | `/api/products` | Create full product with customizations & images |
+| `POST` | `/api/products` | Create full product with customizations & images (ADMIN, SUPER_ADMIN) |
 | `GET` | `/api/products` | Get all products (with nested data) - supports sorting |
 | `GET` | `/api/products/{id}` | Get product by ID (with nested data) |
 | `GET` | `/api/products/sku/{sku}` | Get product by SKU |
-| `PUT` | `/api/products/{id}` | Update product details |
-| `DELETE` | `/api/products/{id}` | Delete product (cascades all related data) |
+| `PUT` | `/api/products/{id}` | Update product details (ADMIN, SUPER_ADMIN) |
+| `DELETE` | `/api/products/{id}` | Delete product (ADMIN, SUPER_ADMIN; cascades related data) |
 
 #### Products Sorting
 

@@ -1,8 +1,11 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using backend.Constants;
+using Microsoft.EntityFrameworkCore;
 
 namespace backend.Models;
 
+[Index(nameof(Email), IsUnique = true)]
 [Table("Users")]
 public class User
 {
@@ -32,7 +35,7 @@ public class User
 
     [Required]
     [MaxLength(50)]
-    public string UserRole { get; set; } = "Customer";
+    public string UserRole { get; set; } = Roles.Customer;
 
     public bool IsActive { get; set; } = true;
 

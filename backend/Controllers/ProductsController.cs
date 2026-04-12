@@ -1,9 +1,11 @@
+using backend.Constants;
 using backend.DTOs.ProductDtos;
 using backend.DTOs.CustomizationOptionDtos;
 using backend.DTOs.CustomizationValueDtos;
 using backend.DTOs.ProductImageDtos;
 using backend.DTOs.CustomizationImageDtos;
 using backend.Application.Abstractions.Products;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
@@ -43,6 +45,7 @@ public class ProductsController : ControllerBase
     /// Create a full product with customizations, values, images, and customization images in one call.
     /// </summary>
     [HttpPost]
+    [Authorize(Roles = Roles.Admin + "," + Roles.SuperAdmin)]
     public async Task<IActionResult> CreateFullProduct([FromBody] CreateFullProductDto dto)
     {
         _logger.LogInformation("CreateFullProduct request received. SKU={Sku}", dto.SKU);
@@ -91,6 +94,7 @@ public class ProductsController : ControllerBase
     /// Update basic product details.
     /// </summary>
     [HttpPut("{id}")]
+    [Authorize(Roles = Roles.Admin + "," + Roles.SuperAdmin)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateProductDto dto)
     {
         _logger.LogInformation("Update product request received. ProductId={ProductId}, SKU={Sku}", id, dto.SKU);
@@ -103,6 +107,7 @@ public class ProductsController : ControllerBase
     /// Delete a product and all related data (cascade).
     /// </summary>
     [HttpDelete("{id}")]
+    [Authorize(Roles = Roles.Admin + "," + Roles.SuperAdmin)]
     public async Task<IActionResult> Delete(int id)
     {
         _logger.LogInformation("Delete product request received. ProductId={ProductId}", id);
@@ -140,6 +145,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpPost("{productId}/options")]
+    [Authorize(Roles = Roles.Admin + "," + Roles.SuperAdmin)]
     public async Task<IActionResult> AddOption(int productId, [FromBody] CreateCustomizationOptionDto dto)
     {
         dto.ProductId = productId;
@@ -148,6 +154,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpPut("options/{optionId}")]
+    [Authorize(Roles = Roles.Admin + "," + Roles.SuperAdmin)]
     public async Task<IActionResult> UpdateOption(int optionId, [FromBody] UpdateCustomizationOptionDto dto)
     {
         var result = await _optionService.UpdateAsync(optionId, dto);
@@ -155,6 +162,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpDelete("options/{optionId}")]
+    [Authorize(Roles = Roles.Admin + "," + Roles.SuperAdmin)]
     public async Task<IActionResult> DeleteOption(int optionId)
     {
         await _optionService.DeleteAsync(optionId);
@@ -178,6 +186,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpPost("options/{optionId}/values")]
+    [Authorize(Roles = Roles.Admin + "," + Roles.SuperAdmin)]
     public async Task<IActionResult> AddValue(int optionId, [FromBody] CreateCustomizationValueDto dto)
     {
         dto.CustomizationOptionId = optionId;
@@ -186,6 +195,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpPut("values/{valueId}")]
+    [Authorize(Roles = Roles.Admin + "," + Roles.SuperAdmin)]
     public async Task<IActionResult> UpdateValue(int valueId, [FromBody] UpdateCustomizationValueDto dto)
     {
         var result = await _valueService.UpdateAsync(valueId, dto);
@@ -193,6 +203,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpDelete("values/{valueId}")]
+    [Authorize(Roles = Roles.Admin + "," + Roles.SuperAdmin)]
     public async Task<IActionResult> DeleteValue(int valueId)
     {
         await _valueService.DeleteAsync(valueId);
@@ -216,6 +227,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpPost("{productId}/images")]
+    [Authorize(Roles = Roles.Admin + "," + Roles.SuperAdmin)]
     public async Task<IActionResult> AddImage(int productId, [FromBody] CreateProductImageDto dto)
     {
         dto.ProductId = productId;
@@ -224,6 +236,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpPut("images/{imageId}")]
+    [Authorize(Roles = Roles.Admin + "," + Roles.SuperAdmin)]
     public async Task<IActionResult> UpdateImage(int imageId, [FromBody] UpdateProductImageDto dto)
     {
         var result = await _imageService.UpdateAsync(imageId, dto);
@@ -231,6 +244,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpDelete("images/{imageId}")]
+    [Authorize(Roles = Roles.Admin + "," + Roles.SuperAdmin)]
     public async Task<IActionResult> DeleteImage(int imageId)
     {
         await _imageService.DeleteAsync(imageId);
@@ -254,6 +268,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpPost("{productId}/customization-images")]
+    [Authorize(Roles = Roles.Admin + "," + Roles.SuperAdmin)]
     public async Task<IActionResult> AddCustomizationImage(int productId, [FromBody] CreateCustomizationImageDto dto)
     {
         dto.ProductId = productId;
@@ -262,6 +277,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpPut("customization-images/{imageId}")]
+    [Authorize(Roles = Roles.Admin + "," + Roles.SuperAdmin)]
     public async Task<IActionResult> UpdateCustomizationImage(int imageId, [FromBody] UpdateCustomizationImageDto dto)
     {
         var result = await _custImageService.UpdateAsync(imageId, dto);
@@ -269,6 +285,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpDelete("customization-images/{imageId}")]
+    [Authorize(Roles = Roles.Admin + "," + Roles.SuperAdmin)]
     public async Task<IActionResult> DeleteCustomizationImage(int imageId)
     {
         await _custImageService.DeleteAsync(imageId);
