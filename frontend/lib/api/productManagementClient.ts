@@ -1,6 +1,6 @@
 import { Product } from "../types";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5047";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5047/api";
 
 export interface CreateProductRequest {
   sku: string;
@@ -37,15 +37,20 @@ export interface ProductListResponse {
 class ProductManagementClient {
   private getHeaders() {
     const token = localStorage.getItem("authToken");
-    return {
+    const headers: Record<string, string> = {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
     };
+    
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+    
+    return headers;
   }
 
   async createProduct(data: CreateProductRequest): Promise<Product> {
     console.log("🔨 Creating product...", data);
-    const response = await fetch(`${API_URL}/api/products/simple`, {
+    const response = await fetch(`${API_URL}/products`, {
       method: "POST",
       headers: this.getHeaders(),
       body: JSON.stringify({
@@ -74,7 +79,7 @@ class ProductManagementClient {
     data: UpdateProductRequest
   ): Promise<Product> {
     console.log("🔄 Updating product...", id, data);
-    const response = await fetch(`${API_URL}/api/products/${id}`, {
+    const response = await fetch(`${API_URL}/products/${id}`, {
       method: "PUT",
       headers: this.getHeaders(),
       body: JSON.stringify({
@@ -102,7 +107,7 @@ class ProductManagementClient {
 
   async getAllProducts(): Promise<ProductListResponse[]> {
     console.log("📦 Fetching all products...");
-    const response = await fetch(`${API_URL}/api/products`, {
+    const response = await fetch(`${API_URL}/products`, {
       headers: this.getHeaders(),
     });
 
@@ -118,7 +123,7 @@ class ProductManagementClient {
 
   async getProductById(id: number): Promise<Product> {
     console.log("🔍 Fetching product by ID...", id);
-    const response = await fetch(`${API_URL}/api/products/${id}`, {
+    const response = await fetch(`${API_URL}/products/${id}`, {
       headers: this.getHeaders(),
     });
 
@@ -134,7 +139,7 @@ class ProductManagementClient {
 
   async deleteProduct(id: number): Promise<void> {
     console.log("🗑️ Deleting product...", id);
-    const response = await fetch(`${API_URL}/api/products/${id}`, {
+    const response = await fetch(`${API_URL}/products/${id}`, {
       method: "DELETE",
       headers: this.getHeaders(),
     });

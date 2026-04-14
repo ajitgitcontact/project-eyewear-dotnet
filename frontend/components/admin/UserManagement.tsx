@@ -60,6 +60,31 @@ export default function UserManagement() {
     setError(null);
     setSuccess(null);
 
+    // Frontend validation
+    if (formData.password.length < 8) {
+      setError("Password must be at least 8 characters long");
+      return;
+    }
+
+    if (!formData.email.includes('@')) {
+      setError("Please enter a valid email address");
+      return;
+    }
+
+    if (!formData.firstName.trim() || !formData.lastName.trim()) {
+      setError("First name and last name are required");
+      return;
+    }
+
+    // Check for duplicate email (only for new users)
+    if (!editingId) {
+      const emailExists = users.some(user => user.email.toLowerCase() === formData.email.toLowerCase());
+      if (emailExists) {
+        setError("A user with this email already exists");
+        return;
+      }
+    }
+
     try {
       if (editingId) {
         // Update user

@@ -4,7 +4,6 @@ import { Product } from "../lib/types";
 interface ProductCardProps {
   product: Product;
 }
-
 export default function ProductCard({ product }: ProductCardProps) {
   const primaryImage = product.images.find((image) => image.isPrimary) ?? product.images[0];
 
