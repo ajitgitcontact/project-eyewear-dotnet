@@ -41,6 +41,7 @@ bld/
 ## Node (frontend)
 node_modules/
 dist/
+.next/
 .env
 .env.local
 .env.*.local

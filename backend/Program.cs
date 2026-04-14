@@ -17,6 +17,18 @@ builder.Host.UseSerilog((context, loggerConfiguration) =>
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
+// ─── CORS Configuration ────────────────────────────────────────────────────
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000", "http://localhost:3001", "http://192.168.1.8:3000", "http://192.168.1.8:3001")
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials();
+    });
+});
+
 builder.Services
     .AddInfrastructureLayer(builder.Configuration)
     .AddApplicationLayer();
@@ -69,6 +81,9 @@ var app = builder.Build();
 app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseSerilogRequestLogging();
 app.UseMiddleware<GlobalExceptionMiddleware>();
+
+// Enable CORS
+app.UseCors("AllowFrontend");
 
 // Seed initial data in development
 if (app.Environment.IsDevelopment())

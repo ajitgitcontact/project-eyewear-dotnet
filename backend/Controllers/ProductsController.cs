@@ -55,6 +55,19 @@ public class ProductsController : ControllerBase
     }
 
     /// <summary>
+    /// Create a simple product without customizations.
+    /// </summary>
+    [HttpPost("simple")]
+    [Authorize(Roles = Roles.Admin + "," + Roles.SuperAdmin)]
+    public async Task<IActionResult> CreateProduct([FromBody] CreateProductDto dto)
+    {
+        _logger.LogInformation("CreateProduct request received. SKU={Sku}", dto.SKU);
+        var result = await _productService.CreateAsync(dto);
+        _logger.LogInformation("CreateProduct succeeded. ProductId={ProductId}, SKU={Sku}", result.ProductId, result.SKU);
+        return CreatedAtAction(nameof(GetById), new { id = result.ProductId }, result);
+    }
+
+    /// <summary>
     /// Get a full product with all nested customizations and images.
     /// </summary>
     [HttpGet("{id}")]
