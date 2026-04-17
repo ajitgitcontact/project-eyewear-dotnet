@@ -4,6 +4,7 @@ import { Product } from "../lib/types";
 interface ProductCardProps {
   product: Product;
 }
+
 export default function ProductCard({ product }: ProductCardProps) {
   const primaryImage = product.images.find((image) => image.isPrimary) ?? product.images[0];
 
@@ -20,11 +21,11 @@ export default function ProductCard({ product }: ProductCardProps) {
         <div>
           <span className="badge">{product.category}</span>
           <h2 className="productName">{product.name}</h2>
-          <p className="productMeta">SKU {product.sku} • {product.brand ?? "Brand not set"}</p>
+          <p className="productMeta">SKU {product.sku} | {product.brand ?? "Brand not set"}</p>
         </div>
         <div>
-          <p className="price">₹{product.basePrice.toFixed(2)}</p>
-          <p className="productMeta">{product.availableQuantity} in stock • {product.soldQuantity} sold</p>
+          <p className="price">Rs. {product.basePrice.toFixed(2)}</p>
+          <p className="productMeta">{product.availableQuantity} in stock | {product.soldQuantity} sold</p>
         </div>
         <Link href={`/product/${product.productId}`} className="button">
           View product

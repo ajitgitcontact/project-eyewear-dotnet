@@ -2,36 +2,35 @@
   max-width: 1400px;
   margin: 0 auto;
   padding: 40px 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: transparent;
   min-height: calc(100vh - 80px);
-  color: #333;
+  color: #f5f1e8;
 }
 
 .title {
   font-size: 32px;
   font-weight: 700;
-  color: white;
+  color: #f5f1e8;
   margin-bottom: 30px;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .error {
-  background: #fee;
-  color: #c33;
+  background: rgba(255, 134, 134, 0.1);
+  color: #ffb3b3;
   padding: 15px 20px;
   border-radius: 8px;
   margin-bottom: 20px;
-  border-left: 4px solid #c33;
+  border-left: 4px solid #ff8686;
   font-weight: 500;
 }
 
 .success {
-  background: #e8f8ee;
-  color: #1f6b3b;
+  background: rgba(116, 211, 155, 0.1);
+  color: #9ae2b7;
   padding: 15px 20px;
   border-radius: 8px;
   margin-bottom: 20px;
-  border-left: 4px solid #22a25a;
+  border-left: 4px solid #74d39b;
   font-weight: 500;
 }
 
@@ -42,20 +41,20 @@
   margin-bottom: 40px;
 }
 
-/* Form Section */
 .formSection {
-  background: white;
+  background: #171717;
   padding: 30px;
   border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.24);
 }
 
 .formSection h2 {
   font-size: 22px;
   font-weight: 600;
   margin-bottom: 25px;
-  color: #333;
-  border-bottom: 2px solid #667eea;
+  color: #f5f1e8;
+  border-bottom: 2px solid #f58a1f;
   padding-bottom: 12px;
 }
 
@@ -79,7 +78,7 @@
 
 .formGroup label {
   font-weight: 600;
-  color: #333;
+  color: #f5f1e8;
   font-size: 14px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -89,22 +88,22 @@
 .formGroup select,
 .formGroup textarea {
   padding: 12px 14px;
-  border: 2px solid #eee;
+  border: 2px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
   font-size: 14px;
   font-family: inherit;
   transition: all 0.3s ease;
-  background: white;
-  color: #333;
+  background: #101010;
+  color: #f5f1e8;
 }
 
 .formGroup input:focus,
 .formGroup select:focus,
 .formGroup textarea:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-  background: #f9fafb;
+  border-color: #f58a1f;
+  box-shadow: 0 0 0 3px rgba(245, 138, 31, 0.12);
+  background: #141414;
 }
 
 .formGroup textarea {
@@ -124,7 +123,7 @@
   align-items: center;
   gap: 10px;
   font-weight: 600;
-  color: #333;
+  color: #f5f1e8;
 }
 
 .checkboxRow input {
@@ -133,7 +132,7 @@
 }
 
 .editorSection {
-  border-top: 1px solid #ececf4;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
   padding-top: 22px;
   display: flex;
   flex-direction: column;
@@ -150,12 +149,12 @@
 .sectionHeader h3,
 .sectionHeader h4 {
   margin: 0;
-  color: #333;
+  color: #f5f1e8;
 }
 
 .card {
-  background: #f8f9ff;
-  border: 1px solid #dfe4ff;
+  background: #111111;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
   padding: 18px;
   display: flex;
@@ -164,8 +163,8 @@
 }
 
 .nestedCard {
-  background: white;
-  border: 1px solid #e7e7ef;
+  background: #1b1b1b;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 10px;
   padding: 16px;
   display: flex;
@@ -184,7 +183,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  color: #333;
+  color: #f5f1e8;
 }
 
 .secondaryBtn,
@@ -196,24 +195,24 @@
 }
 
 .secondaryBtn {
-  background: #eef2ff;
-  color: #4256c5;
+  background: rgba(245, 138, 31, 0.14);
+  color: #ffbf76;
   padding: 10px 14px;
   border-radius: 8px;
 }
 
 .secondaryBtn:hover {
-  background: #dde5ff;
+  background: rgba(245, 138, 31, 0.22);
 }
 
 .textBtn {
   background: transparent;
-  color: #cc4b4b;
+  color: #ff9b9b;
   padding: 0;
 }
 
 .textBtn:hover {
-  color: #a33232;
+  color: #ffb7b7;
 }
 
 .imageRow {
@@ -228,7 +227,7 @@
   padding: 12px 24px;
   border: none;
   border-radius: 8px;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 14px;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -237,14 +236,14 @@
 }
 
 .submitBtn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  background: #f58a1f;
+  color: #111;
+  box-shadow: 0 4px 15px rgba(245, 138, 31, 0.2);
 }
 
 .submitBtn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 6px 20px rgba(245, 138, 31, 0.28);
 }
 
 .submitBtn:active {
@@ -252,29 +251,29 @@
 }
 
 .cancelBtn {
-  background: #eee;
-  color: #666;
-  border: 2px solid #ddd;
+  background: #242424;
+  color: #f5f1e8;
+  border: 2px solid rgba(255, 255, 255, 0.1);
 }
 
 .cancelBtn:hover {
-  background: #f5f5f5;
-  border-color: #ccc;
+  background: #2d2d2d;
+  border-color: rgba(255, 255, 255, 0.16);
 }
 
-/* Table Section */
 .tableSection {
-  background: white;
+  background: #171717;
   padding: 30px;
   border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.24);
   grid-column: 1 / -1;
 }
 
 .tableSection h2 {
   font-size: 22px;
   font-weight: 600;
-  color: #333;
+  color: #f5f1e8;
   margin: 0;
 }
 
@@ -284,7 +283,7 @@
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 25px;
-  border-bottom: 2px solid #667eea;
+  border-bottom: 2px solid #f58a1f;
   padding-bottom: 12px;
 }
 
@@ -295,25 +294,26 @@
 .searchBox input {
   width: 100%;
   padding: 12px 14px;
-  border: 2px solid #e7e7ef;
+  border: 2px solid rgba(255, 255, 255, 0.1);
   border-radius: 10px;
   font-size: 14px;
-  color: #333;
+  color: #f5f1e8;
+  background: #101010;
 }
 
 .searchBox input:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: #f58a1f;
+  box-shadow: 0 0 0 3px rgba(245, 138, 31, 0.12);
 }
 
 .loading,
 .empty {
   text-align: center;
   padding: 40px 20px;
-  color: #999;
+  color: rgba(245, 241, 232, 0.56);
   font-size: 16px;
-  background: #f9fafb;
+  background: #111111;
   border-radius: 8px;
 }
 
@@ -328,8 +328,8 @@
 }
 
 .table thead {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: #101010;
+  color: #f5f1e8;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -341,22 +341,22 @@
 }
 
 .table tbody tr {
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   transition: background 0.2s ease;
 }
 
 .table tbody tr:hover {
-  background: #f9fafb;
+  background: #1d1d1d;
 }
 
 .table td {
   padding: 14px 12px;
-  color: #666;
+  color: rgba(245, 241, 232, 0.72);
 }
 
 .sku {
   font-weight: 600;
-  color: #333;
+  color: #f5f1e8;
   font-family: monospace;
   max-width: 100px;
   overflow: hidden;
@@ -366,7 +366,7 @@
 
 .name {
   font-weight: 500;
-  color: #333;
+  color: #f5f1e8;
   max-width: 180px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -374,13 +374,13 @@
 }
 
 .price {
-  color: #667eea;
+  color: #ffbf76;
   font-weight: 600;
 }
 
 .quantity {
   font-weight: 500;
-  color: #764ba2;
+  color: #f5f1e8;
 }
 
 .badge {
@@ -394,13 +394,13 @@
 }
 
 .active {
-  background: #d4edda;
-  color: #155724;
+  background: rgba(116, 211, 155, 0.14);
+  color: #9ae2b7;
 }
 
 .inactive {
-  background: #f8d7da;
-  color: #721c24;
+  background: rgba(255, 134, 134, 0.14);
+  color: #ffb3b3;
 }
 
 .actions {
@@ -422,51 +422,49 @@
 }
 
 .editBtn {
-  background: #667eea;
-  color: white;
+  background: rgba(76, 144, 255, 0.12);
+  color: #8ab7ff;
 }
 
 .editBtn:hover {
-  background: #5568d3;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-}
-
-.deleteBtn {
-  background: #f08080;
+  background: #2c6fe2;
   color: white;
 }
 
+.deleteBtn {
+  background: rgba(255, 134, 134, 0.12);
+  color: #ff9b9b;
+}
+
 .deleteBtn:hover {
-  background: #e86464;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(240, 128, 128, 0.3);
+  background: #c94d4d;
+  color: white;
 }
 
 .unauthorized {
   max-width: 600px;
   margin: 100px auto;
   padding: 40px 30px;
-  background: white;
+  background: #171717;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.24);
   text-align: center;
-  color: #333;
+  color: #f5f1e8;
 }
 
 .unauthorized h2 {
   font-size: 24px;
   font-weight: 700;
   margin-bottom: 15px;
-  color: #c33;
+  color: #ffb3b3;
 }
 
 .unauthorized p {
   font-size: 16px;
-  color: #666;
+  color: rgba(245, 241, 232, 0.68);
 }
 
-/* Responsive Design */
 @media (max-width: 1024px) {
   .content {
     grid-template-columns: 1fr;

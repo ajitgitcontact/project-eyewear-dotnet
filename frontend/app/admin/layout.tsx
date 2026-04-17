@@ -2,7 +2,6 @@
 
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import Header from "@/components/common/Header";
 import AdminNav from "@/components/admin/AdminNav";
 import { useAuth } from "@/context/AuthContext";
 
@@ -51,7 +50,6 @@ export default function AdminLayout({
 
   return (
     <>
-      <Header />
       <AdminNav />
       {children}
     </>

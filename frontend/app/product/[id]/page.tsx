@@ -36,14 +36,14 @@ export default async function ProductPage({ params }: PageProps) {
   return (
     <main>
       <Link href="/" className="linkBack">
-        ← Back to product list
+        Back to product list
       </Link>
       <section className="pageHeader">
         <div>
           <h1 className="title">{product.name}</h1>
           <p className="description">{product.description ?? "No description provided."}</p>
           <p className="productMeta">
-            SKU {product.sku} • {product.category} • {product.brand ?? "No brand"}
+            SKU {product.sku} | {product.category} | {product.brand ?? "No brand"}
           </p>
         </div>
       </section>
@@ -58,9 +58,9 @@ export default async function ProductPage({ params }: PageProps) {
             </div>
           )}
           <div style={{ padding: "1.5rem" }}>
-            <p className="price">₹{product.basePrice.toFixed(2)}</p>
+            <p className="price">Rs. {product.basePrice.toFixed(2)}</p>
             <p className="detailText">{product.availableQuantity} units available</p>
-            <p className="detailText">{product.soldQuantity} sold • Priority {product.priority}</p>
+            <p className="detailText">{product.soldQuantity} sold | Priority {product.priority}</p>
             <p className="detailText">Prescription required: {product.hasPrescription ? "Yes" : "No"}</p>
             <p className="detailText">Product status: {product.isActive ? "Active" : "Inactive"}</p>
           </div>
@@ -82,7 +82,7 @@ export default async function ProductPage({ params }: PageProps) {
                     {option.values.map((value) => (
                       <div key={value.customizationValueId} className="valueRow">
                         <span>{value.value}</span>
-                        <span>+₹{value.additionalPrice.toFixed(2)}</span>
+                        <span>+Rs. {value.additionalPrice.toFixed(2)}</span>
                       </div>
                     ))}
                   </div>

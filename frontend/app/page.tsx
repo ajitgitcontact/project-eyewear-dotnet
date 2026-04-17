@@ -3,7 +3,6 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import Header from "@/components/common/Header";
 import ProductGrid from "@/components/products/ProductGrid";
 
 export default function HomePage() {
@@ -40,7 +39,6 @@ export default function HomePage() {
 
   return (
     <>
-      <Header />
       <ProductGrid />
     </>
   );

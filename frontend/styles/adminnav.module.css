@@ -1,10 +1,10 @@
 .adminNav {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-bottom: 3px solid rgba(255, 255, 255, 0.2);
+  background: rgba(14, 14, 14, 0.95);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   position: sticky;
-  top: 80px;
+  top: 166px;
   z-index: 900;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(14px);
 }
 
 .container {
@@ -25,24 +25,24 @@
 }
 
 .homeLink {
-  color: white;
+  color: #fff7eb;
   text-decoration: none;
   font-weight: 700;
   padding: 12px 18px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.14);
-  border: 1px solid rgba(255, 255, 255, 0.24);
+  background: rgba(245, 138, 31, 0.14);
+  border: 1px solid rgba(245, 138, 31, 0.3);
   transition: all 0.3s ease;
 }
 
 .homeLink:hover {
-  background: rgba(255, 255, 255, 0.22);
+  background: rgba(245, 138, 31, 0.22);
 }
 
 .tab {
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(245, 241, 232, 0.64);
   padding: 16px 24px;
   font-size: 14px;
   font-weight: 600;
@@ -55,14 +55,14 @@
 }
 
 .tab:hover {
-  color: white;
-  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .tab.active {
-  color: white;
-  border-bottom-color: #4ade80;
-  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border-bottom-color: #f58a1f;
+  background: rgba(245, 138, 31, 0.08);
 }
 
 .tab.active::after {
@@ -72,7 +72,7 @@
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, #4ade80, #22c55e);
+  background: linear-gradient(90deg, #f58a1f, #ffb347);
   animation: slideIn 0.3s ease;
 }
 
@@ -88,12 +88,26 @@
 
 @media (max-width: 768px) {
   .adminNav {
-    top: 70px;
+    position: static;
   }
 
   .tab {
     padding: 12px 16px;
     font-size: 12px;
+  }
+
+  .tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+  }
+
+  .tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tab {
+    flex: 0 0 auto;
   }
 }
 
