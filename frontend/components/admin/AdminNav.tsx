@@ -1,11 +1,11 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import styles from "@/styles/adminnav.module.css";
 
 export default function AdminNav() {
   const pathname = usePathname();
-  const router = useRouter();
 
   const tabs = [
     { name: "User Management", path: "/admin/users" },
@@ -15,17 +15,20 @@ export default function AdminNav() {
   return (
     <nav className={styles.adminNav}>
       <div className={styles.container}>
+        <Link href="/" className={styles.homeLink}>
+          Home
+        </Link>
         <div className={styles.tabs}>
           {tabs.map((tab) => (
-            <button
+            <Link
               key={tab.path}
-              onClick={() => router.push(tab.path)}
+              href={tab.path}
               className={`${styles.tab} ${
                 pathname === tab.path ? styles.active : ""
               }`}
             >
               {tab.name}
-            </button>
+            </Link>
           ))}
         </div>
       </div>

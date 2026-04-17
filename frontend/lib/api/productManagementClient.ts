@@ -2,23 +2,30 @@ import { Product } from "../types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5047/api";
 
-export interface CreateProductRequest {
-  sku: string;
+export interface CreateProductImageRequest {
+  imageUrl: string;
+  isPrimary: boolean;
+  displayOrder: number;
+}
+
+export interface CreateCustomizationImageRequest {
+  imageUrl: string;
+}
+
+export interface CreateCustomizationValueRequest {
+  value: string;
+  additionalPrice: number;
+  customizationImages: CreateCustomizationImageRequest[];
+}
+
+export interface CreateCustomizationOptionRequest {
   name: string;
-  description?: string;
-  brand?: string;
-  category: string;
-  basePrice: number;
-  availableQuantity: number;
+  isRequired: boolean;
+  displayOrder: number;
+  values: CreateCustomizationValueRequest[];
 }
 
-export interface UpdateProductRequest extends CreateProductRequest {
-  isActive?: boolean;
-  priority?: number;
-}
-
-export interface ProductListResponse {
-  productId: number;
+export interface CreateFullProductRequest {
   sku: string;
   name: string;
   description?: string;
@@ -29,10 +36,23 @@ export interface ProductListResponse {
   soldQuantity: number;
   priority: number;
   hasPrescription: boolean;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt?: string;
+  images: CreateProductImageRequest[];
+  customizationOptions: CreateCustomizationOptionRequest[];
 }
+
+export interface UpdateProductRequest {
+  sku: string;
+  name: string;
+  description?: string;
+  brand?: string;
+  category: string;
+  basePrice: number;
+  availableQuantity: number;
+  isActive?: boolean;
+  priority?: number;
+}
+
+export type ProductListResponse = Product;
 
 class ProductManagementClient {
   private getHeaders() {
@@ -40,45 +60,30 @@ class ProductManagementClient {
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
     };
-    
+
     if (token) {
       headers.Authorization = `Bearer ${token}`;
     }
-    
+
     return headers;
   }
 
-  async createProduct(data: CreateProductRequest): Promise<Product> {
-    console.log("🔨 Creating product...", data);
+  async createProduct(data: CreateFullProductRequest): Promise<Product> {
     const response = await fetch(`${API_URL}/products`, {
       method: "POST",
       headers: this.getHeaders(),
-      body: JSON.stringify({
-        sku: data.sku,
-        name: data.name,
-        description: data.description || null,
-        brand: data.brand || null,
-        category: data.category,
-        basePrice: data.basePrice,
-        availableQuantity: data.availableQuantity,
-      }),
+      body: JSON.stringify(data),
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json().catch(() => ({ message: "Failed to create product" }));
       throw new Error(error.message || "Failed to create product");
     }
 
-    const product: Product = await response.json();
-    console.log("✅ Product created successfully:", product);
-    return product;
+    return response.json();
   }
 
-  async updateProduct(
-    id: number,
-    data: UpdateProductRequest
-  ): Promise<Product> {
-    console.log("🔄 Updating product...", id, data);
+  async updateProduct(id: number, data: UpdateProductRequest): Promise<Product> {
     const response = await fetch(`${API_URL}/products/${id}`, {
       method: "PUT",
       headers: this.getHeaders(),
@@ -96,60 +101,49 @@ class ProductManagementClient {
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json().catch(() => ({ message: "Failed to update product" }));
       throw new Error(error.message || "Failed to update product");
     }
 
-    const product: Product = await response.json();
-    console.log("✅ Product updated successfully:", product);
-    return product;
+    return response.json();
   }
 
   async getAllProducts(): Promise<ProductListResponse[]> {
-    console.log("📦 Fetching all products...");
     const response = await fetch(`${API_URL}/products`, {
       headers: this.getHeaders(),
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json().catch(() => ({ message: "Failed to fetch products" }));
       throw new Error(error.message || "Failed to fetch products");
     }
 
-    const products: ProductListResponse[] = await response.json();
-    console.log("✅ Products fetched successfully:", products.length);
-    return products;
+    return response.json();
   }
 
   async getProductById(id: number): Promise<Product> {
-    console.log("🔍 Fetching product by ID...", id);
     const response = await fetch(`${API_URL}/products/${id}`, {
       headers: this.getHeaders(),
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json().catch(() => ({ message: "Failed to fetch product" }));
       throw new Error(error.message || "Failed to fetch product");
     }
 
-    const product: Product = await response.json();
-    console.log("✅ Product fetched successfully:", product);
-    return product;
+    return response.json();
   }
 
   async deleteProduct(id: number): Promise<void> {
-    console.log("🗑️ Deleting product...", id);
     const response = await fetch(`${API_URL}/products/${id}`, {
       method: "DELETE",
       headers: this.getHeaders(),
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json().catch(() => ({ message: "Failed to delete product" }));
       throw new Error(error.message || "Failed to delete product");
     }
-
-    console.log("✅ Product deleted successfully:", id);
   }
 }
 

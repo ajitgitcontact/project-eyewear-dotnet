@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
@@ -72,20 +73,20 @@ export default function Header() {
           </div>
           {(user.role === "ADMIN" || user.role === "SUPER_ADMIN") && (
             <div className={styles.adminMenu}>
-              <button
-                onClick={() => router.push("/admin/users")}
+              <Link
+                href="/admin/users"
                 className={styles.adminLink}
                 title="User Management"
               >
                 Users
-              </button>
-              <button
-                onClick={() => router.push("/admin/products")}
+              </Link>
+              <Link
+                href="/admin/products"
                 className={styles.adminLink}
                 title="Product Management"
               >
                 Products
-              </button>
+              </Link>
             </div>
           )}
           <button onClick={handleLogout} className={styles.logoutBtn}>

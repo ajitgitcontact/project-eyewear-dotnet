@@ -4,14 +4,16 @@ import Link from "next/link";
 import { Product } from "../../../lib/types";
 
 interface PageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5047/api";
 
 async function getProduct(id: string): Promise<Product> {
   try {
-    const response = await fetch(`http://localhost:5047/api/Products/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/Products/${id}`, {
       cache: "no-store",
     });
 
@@ -27,7 +29,8 @@ async function getProduct(id: string): Promise<Product> {
 }
 
 export default async function ProductPage({ params }: PageProps) {
-  const product = await getProduct(params.id);
+  const { id } = await params;
+  const product = await getProduct(id);
   const primaryImage = product.images.find((image) => image.isPrimary) ?? product.images[0];
 
   return (

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Product } from "@/lib/types";
 import styles from "@/styles/productgrid.module.css";
 
@@ -113,9 +114,12 @@ export default function ProductGrid() {
                   </span>
                 </div>
 
-                <button className={styles.viewButton}>
+                <Link
+                  href={`/product/${product.productId}`}
+                  className={styles.viewButton}
+                >
                   View Details
-                </button>
+                </Link>
               </div>
             </div>
           ))}
