@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using backend.Data;
@@ -12,9 +13,11 @@ using backend.Models.Orders;
 namespace backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260425050900_AddOrderManagementSchema")]
+    partial class AddOrderManagementSchema
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -31,55 +34,70 @@ namespace backend.Migrations
             modelBuilder.Entity("backend.Models.Orders.CustomerPrescription", b =>
                 {
                     b.Property<string>("CustomerPrescriptionsId")
-                        .HasColumnType("varchar");
+                        .HasColumnType("varchar")
+                        .HasColumnName("customer_prescriptions_id");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<string>("CustomerOrderId")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
+                        .HasColumnType("varchar(50)")
+                        .HasColumnName("customer_order_id");
 
                     b.Property<decimal?>("LeftAdd")
-                        .HasColumnType("numeric(5,2)");
+                        .HasColumnType("numeric(5,2)")
+                        .HasColumnName("left_add");
 
                     b.Property<int?>("LeftAxis")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("left_axis");
 
                     b.Property<decimal?>("LeftCylinder")
-                        .HasColumnType("numeric(5,2)");
+                        .HasColumnType("numeric(5,2)")
+                        .HasColumnName("left_cylinder");
 
                     b.Property<decimal?>("LeftSphere")
-                        .HasColumnType("numeric(5,2)");
+                        .HasColumnType("numeric(5,2)")
+                        .HasColumnName("left_sphere");
 
                     b.Property<string>("Notes")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("notes");
 
                     b.Property<decimal?>("PD")
-                        .HasColumnType("numeric(5,2)");
+                        .HasColumnType("numeric(5,2)")
+                        .HasColumnName("pd");
 
                     b.Property<decimal?>("RightAdd")
-                        .HasColumnType("numeric(5,2)");
+                        .HasColumnType("numeric(5,2)")
+                        .HasColumnName("right_add");
 
                     b.Property<int?>("RightAxis")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("right_axis");
 
                     b.Property<decimal?>("RightCylinder")
-                        .HasColumnType("numeric(5,2)");
+                        .HasColumnType("numeric(5,2)")
+                        .HasColumnName("right_cylinder");
 
                     b.Property<decimal?>("RightSphere")
-                        .HasColumnType("numeric(5,2)");
+                        .HasColumnType("numeric(5,2)")
+                        .HasColumnName("right_sphere");
 
                     b.Property<DateTime>("UpdatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("user_id");
 
                     b.HasKey("CustomerPrescriptionsId");
 
@@ -87,64 +105,76 @@ namespace backend.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("CustomerPrescriptions", null, t =>
+                    b.ToTable("customer_prescriptions", null, t =>
                         {
-                            t.HasCheckConstraint("CK_CustomerPrescriptions_LeftAxis_Range", "\"LeftAxis\" IS NULL OR (\"LeftAxis\" >= 0 AND \"LeftAxis\" <= 180)");
+                            t.HasCheckConstraint("CK_customer_prescriptions_left_axis_range", "left_axis IS NULL OR (left_axis >= 0 AND left_axis <= 180)");
 
-                            t.HasCheckConstraint("CK_CustomerPrescriptions_PD_NonNegative", "\"PD\" IS NULL OR \"PD\" >= 0");
+                            t.HasCheckConstraint("CK_customer_prescriptions_pd_non_negative", "pd IS NULL OR pd >= 0");
 
-                            t.HasCheckConstraint("CK_CustomerPrescriptions_RightAxis_Range", "\"RightAxis\" IS NULL OR (\"RightAxis\" >= 0 AND \"RightAxis\" <= 180)");
+                            t.HasCheckConstraint("CK_customer_prescriptions_right_axis_range", "right_axis IS NULL OR (right_axis >= 0 AND right_axis <= 180)");
                         });
                 });
 
             modelBuilder.Entity("backend.Models.Orders.Order", b =>
                 {
                     b.Property<string>("OrdersId")
-                        .HasColumnType("varchar");
+                        .HasColumnType("varchar")
+                        .HasColumnName("orders_id");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<string>("CustomerEmail")
                         .IsRequired()
                         .HasMaxLength(150)
-                        .HasColumnType("character varying(150)");
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("customer_email");
 
                     b.Property<string>("CustomerName")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("customer_name");
 
                     b.Property<string>("CustomerOrderId")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
+                        .HasColumnType("varchar(50)")
+                        .HasColumnName("customer_order_id");
 
                     b.Property<string>("CustomerPhone")
                         .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("customer_phone");
 
                     b.Property<string>("Notes")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("notes");
 
                     b.Property<OrderStatus>("OrderStatus")
-                        .HasColumnType("order_status");
+                        .HasColumnType("order_status")
+                        .HasColumnName("order_status");
 
                     b.Property<PaymentStatus>("PaymentStatus")
-                        .HasColumnType("payment_status");
+                        .HasColumnType("payment_status")
+                        .HasColumnName("payment_status");
 
                     b.Property<decimal>("TotalAmount")
-                        .HasColumnType("numeric(10,2)");
+                        .HasColumnType("numeric(10,2)")
+                        .HasColumnName("total_amount");
 
                     b.Property<DateTime>("UpdatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("user_id");
 
                     b.HasKey("OrdersId");
 
@@ -153,111 +183,132 @@ namespace backend.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Orders", null, t =>
+                    b.ToTable("orders", null, t =>
                         {
-                            t.HasCheckConstraint("CK_Orders_TotalAmount_NonNegative", "\"TotalAmount\" >= 0");
+                            t.HasCheckConstraint("CK_orders_total_amount_non_negative", "total_amount >= 0");
                         });
                 });
 
             modelBuilder.Entity("backend.Models.Orders.OrderAddress", b =>
                 {
                     b.Property<string>("OrderAddressesId")
-                        .HasColumnType("varchar");
+                        .HasColumnType("varchar")
+                        .HasColumnName("order_addresses_id");
 
                     b.Property<string>("City")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("city");
 
                     b.Property<string>("Country")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("country");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<string>("CustomerOrderId")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
+                        .HasColumnType("varchar(50)")
+                        .HasColumnName("customer_order_id");
 
                     b.Property<string>("Line1")
                         .IsRequired()
                         .HasMaxLength(250)
-                        .HasColumnType("character varying(250)");
+                        .HasColumnType("character varying(250)")
+                        .HasColumnName("line1");
 
                     b.Property<string>("Line2")
                         .HasMaxLength(250)
-                        .HasColumnType("character varying(250)");
+                        .HasColumnType("character varying(250)")
+                        .HasColumnName("line2");
 
                     b.Property<string>("Pincode")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("pincode");
 
                     b.Property<string>("State")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("state");
 
                     b.Property<AddressType>("Type")
-                        .HasColumnType("address_type");
+                        .HasColumnType("address_type")
+                        .HasColumnName("type");
 
                     b.Property<DateTime>("UpdatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.HasKey("OrderAddressesId");
 
                     b.HasIndex("CustomerOrderId");
 
-                    b.ToTable("OrderAddresses");
+                    b.ToTable("order_addresses");
                 });
 
             modelBuilder.Entity("backend.Models.Orders.OrderItem", b =>
                 {
                     b.Property<string>("OrderItemsId")
-                        .HasColumnType("varchar");
+                        .HasColumnType("varchar")
+                        .HasColumnName("order_items_id");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<string>("CustomerOrderId")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
+                        .HasColumnType("varchar(50)")
+                        .HasColumnName("customer_order_id");
 
                     b.Property<decimal>("Price")
-                        .HasColumnType("numeric(10,2)");
+                        .HasColumnType("numeric(10,2)")
+                        .HasColumnName("price");
 
                     b.Property<int>("ProductId")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("product_id");
 
                     b.Property<string>("ProductName")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("product_name");
 
                     b.Property<int>("Quantity")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("quantity");
 
                     b.Property<string>("SKU")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("sku");
 
                     b.Property<decimal>("TotalPrice")
-                        .HasColumnType("numeric(10,2)");
+                        .HasColumnType("numeric(10,2)")
+                        .HasColumnName("total_price");
 
                     b.Property<DateTime>("UpdatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.HasKey("OrderItemsId");
@@ -269,50 +320,58 @@ namespace backend.Migrations
                     b.HasIndex("SKU")
                         .IsUnique();
 
-                    b.ToTable("OrderItems", null, t =>
+                    b.ToTable("order_items", null, t =>
                         {
-                            t.HasCheckConstraint("CK_OrderItems_Price_NonNegative", "\"Price\" >= 0");
+                            t.HasCheckConstraint("CK_order_items_price_non_negative", "price >= 0");
 
-                            t.HasCheckConstraint("CK_OrderItems_Quantity_Positive", "\"Quantity\" > 0");
+                            t.HasCheckConstraint("CK_order_items_quantity_positive", "quantity > 0");
 
-                            t.HasCheckConstraint("CK_OrderItems_TotalPrice_NonNegative", "\"TotalPrice\" >= 0");
+                            t.HasCheckConstraint("CK_order_items_total_price_non_negative", "total_price >= 0");
                         });
                 });
 
             modelBuilder.Entity("backend.Models.Orders.OrderItemCustomization", b =>
                 {
                     b.Property<string>("OrderItemCustomizationsId")
-                        .HasColumnType("varchar");
+                        .HasColumnType("varchar")
+                        .HasColumnName("order_item_customizations_id");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<int?>("CustomizationOptionId")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("customization_option_id");
 
                     b.Property<int?>("CustomizationValueId")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("customization_value_id");
 
                     b.Property<string>("OrderItemId")
                         .IsRequired()
-                        .HasColumnType("varchar");
+                        .HasColumnType("varchar")
+                        .HasColumnName("order_item_id");
 
                     b.Property<string>("Type")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("type");
 
                     b.Property<DateTime>("UpdatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<string>("Value")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("value");
 
                     b.HasKey("OrderItemCustomizationsId");
 
@@ -322,82 +381,96 @@ namespace backend.Migrations
 
                     b.HasIndex("OrderItemId");
 
-                    b.ToTable("OrderItemCustomizations");
+                    b.ToTable("order_item_customizations");
                 });
 
             modelBuilder.Entity("backend.Models.Orders.OrderStatusLog", b =>
                 {
                     b.Property<string>("OrderStatusLogsId")
-                        .HasColumnType("varchar");
+                        .HasColumnType("varchar")
+                        .HasColumnName("order_status_logs_id");
 
                     b.Property<string>("Comment")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("comment");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<string>("CustomerOrderId")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
+                        .HasColumnType("varchar(50)")
+                        .HasColumnName("customer_order_id");
 
                     b.Property<OrderStatus>("Status")
-                        .HasColumnType("order_status");
+                        .HasColumnType("order_status")
+                        .HasColumnName("status");
 
                     b.Property<DateTime>("UpdatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.HasKey("OrderStatusLogsId");
 
                     b.HasIndex("CustomerOrderId");
 
-                    b.ToTable("OrderStatusLogs");
+                    b.ToTable("order_status_logs");
                 });
 
             modelBuilder.Entity("backend.Models.Orders.Payment", b =>
                 {
                     b.Property<string>("PaymentsId")
-                        .HasColumnType("varchar");
+                        .HasColumnType("varchar")
+                        .HasColumnName("payments_id");
 
                     b.Property<decimal>("Amount")
-                        .HasColumnType("numeric(10,2)");
+                        .HasColumnType("numeric(10,2)")
+                        .HasColumnName("amount");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<string>("CustomerOrderId")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
+                        .HasColumnType("varchar(50)")
+                        .HasColumnName("customer_order_id");
 
                     b.Property<PaymentMethod>("Method")
-                        .HasColumnType("payment_method");
+                        .HasColumnType("payment_method")
+                        .HasColumnName("method");
 
                     b.Property<PaymentTxnStatus>("Status")
-                        .HasColumnType("payment_txn_status");
+                        .HasColumnType("payment_txn_status")
+                        .HasColumnName("status");
 
                     b.Property<string>("TransactionId")
                         .HasMaxLength(150)
-                        .HasColumnType("character varying(150)");
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("transaction_id");
 
                     b.Property<DateTime>("UpdatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.HasKey("PaymentsId");
 
                     b.HasIndex("CustomerOrderId");
 
-                    b.ToTable("Payments", null, t =>
+                    b.ToTable("payments", null, t =>
                         {
-                            t.HasCheckConstraint("CK_Payments_Amount_NonNegative", "\"Amount\" >= 0");
+                            t.HasCheckConstraint("CK_payments_amount_non_negative", "amount >= 0");
                         });
                 });
 
