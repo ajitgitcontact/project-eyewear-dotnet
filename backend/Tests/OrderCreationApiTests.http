@@ -1,0 +1,350 @@
+@backend_HostAddress = http://localhost:5047
+@customerToken = <CUSTOMER_TOKEN>
+@adminToken = <ADMIN_TOKEN>
+@wrongRoleToken = <TOKEN_WITH_UNAUTHORIZED_ROLE>
+@invalidToken = invalid.jwt.value
+@productId = 1
+@requiredOptionId = 1
+@validValueId = 1
+@wrongOptionId = 999999
+@wrongValueId = 999999
+
+# Test notes:
+# - Replace token and product/customization variables before running.
+# - Use Swagger or GET /api/products to choose product/customization IDs that exist.
+# - Verify rollback cases by checking the database has no rows for the returned/attempted order when a request fails.
+# - Discount scenarios currently document placeholder behavior: coupon codes are accepted but discountAmount remains 0.
+
+###
+
+# Authentication: unauthenticated request should fail with 401.
+POST {{backend_HostAddress}}/api/orders/create
+Content-Type: application/json
+
+{}
+
+###
+
+# Authentication: invalid JWT should fail with 401.
+POST {{backend_HostAddress}}/api/orders/create
+Authorization: Bearer {{invalidToken}}
+Content-Type: application/json
+
+{}
+
+###
+
+# Authentication: wrong role should fail with 403.
+POST {{backend_HostAddress}}/api/orders/create
+Authorization: Bearer {{wrongRoleToken}}
+Content-Type: application/json
+
+{}
+
+###
+
+# Validation: empty payload should fail with 400.
+POST {{backend_HostAddress}}/api/orders/create
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{}
+
+###
+
+# Validation: missing customer details should fail with 400.
+POST {{backend_HostAddress}}/api/orders/create
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "address": {
+    "type": "SHIPPING",
+    "line1": "221 MG Road",
+    "city": "Bengaluru",
+    "state": "Karnataka",
+    "pincode": "560001",
+    "country": "India"
+  },
+  "items": [
+    { "productId": {{productId}}, "quantity": 1 }
+  ],
+  "payment": { "method": "COD" }
+}
+
+###
+
+# Validation: missing address should fail with 400.
+POST {{backend_HostAddress}}/api/orders/create
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "customer": {
+    "name": "Aarav Sharma",
+    "email": "aarav@example.com"
+  },
+  "items": [
+    { "productId": {{productId}}, "quantity": 1 }
+  ],
+  "payment": { "method": "COD" }
+}
+
+###
+
+# Validation: missing items should fail with 400.
+POST {{backend_HostAddress}}/api/orders/create
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "customer": {
+    "name": "Aarav Sharma",
+    "email": "aarav@example.com"
+  },
+  "address": {
+    "type": "SHIPPING",
+    "line1": "221 MG Road",
+    "city": "Bengaluru",
+    "state": "Karnataka",
+    "pincode": "560001",
+    "country": "India"
+  },
+  "items": [],
+  "payment": { "method": "COD" }
+}
+
+###
+
+# Validation: quantity <= 0 should fail with 400.
+POST {{backend_HostAddress}}/api/orders/create
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "customer": {
+    "name": "Aarav Sharma",
+    "email": "aarav@example.com"
+  },
+  "address": {
+    "type": "SHIPPING",
+    "line1": "221 MG Road",
+    "city": "Bengaluru",
+    "state": "Karnataka",
+    "pincode": "560001",
+    "country": "India"
+  },
+  "items": [
+    { "productId": {{productId}}, "quantity": 0 }
+  ],
+  "payment": { "method": "COD" }
+}
+
+###
+
+# Validation: invalid ProductId should fail with 404.
+POST {{backend_HostAddress}}/api/orders/create
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "customer": {
+    "name": "Aarav Sharma",
+    "email": "aarav@example.com"
+  },
+  "address": {
+    "type": "SHIPPING",
+    "line1": "221 MG Road",
+    "city": "Bengaluru",
+    "state": "Karnataka",
+    "pincode": "560001",
+    "country": "India"
+  },
+  "items": [
+    { "productId": 999999, "quantity": 1 }
+  ],
+  "payment": { "method": "COD" }
+}
+
+###
+
+# Validation: invalid customization option should fail with 400.
+POST {{backend_HostAddress}}/api/orders/create
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "customer": {
+    "name": "Aarav Sharma",
+    "email": "aarav@example.com"
+  },
+  "address": {
+    "type": "SHIPPING",
+    "line1": "221 MG Road",
+    "city": "Bengaluru",
+    "state": "Karnataka",
+    "pincode": "560001",
+    "country": "India"
+  },
+  "items": [
+    {
+      "productId": {{productId}},
+      "quantity": 1,
+      "customizations": [
+        { "customizationOptionId": {{wrongOptionId}} }
+      ]
+    }
+  ],
+  "payment": { "method": "COD" }
+}
+
+###
+
+# Validation: invalid customization value should fail with 400.
+POST {{backend_HostAddress}}/api/orders/create
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "customer": {
+    "name": "Aarav Sharma",
+    "email": "aarav@example.com"
+  },
+  "address": {
+    "type": "SHIPPING",
+    "line1": "221 MG Road",
+    "city": "Bengaluru",
+    "state": "Karnataka",
+    "pincode": "560001",
+    "country": "India"
+  },
+  "items": [
+    {
+      "productId": {{productId}},
+      "quantity": 1,
+      "customizations": [
+        {
+          "customizationOptionId": {{requiredOptionId}},
+          "customizationValueId": {{wrongValueId}}
+        }
+      ]
+    }
+  ],
+  "payment": { "method": "COD" }
+}
+
+###
+
+# Validation: invalid prescription data should fail with 400.
+POST {{backend_HostAddress}}/api/orders/create
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "customer": {
+    "name": "Aarav Sharma",
+    "email": "aarav@example.com"
+  },
+  "address": {
+    "type": "SHIPPING",
+    "line1": "221 MG Road",
+    "city": "Bengaluru",
+    "state": "Karnataka",
+    "pincode": "560001",
+    "country": "India"
+  },
+  "items": [
+    { "productId": {{productId}}, "quantity": 1 }
+  ],
+  "prescription": {
+    "rightAxis": 181,
+    "pd": -1
+  },
+  "payment": { "method": "COD" }
+}
+
+###
+
+# Security: frontend UserId, CustomerOrderId, totals, and statuses should be ignored.
+# Expected success if product/customization data is valid; response userId must match JWT,
+# customerOrderId must be backend-generated, paymentStatus must be PENDING, status must be INITIATED.
+POST {{backend_HostAddress}}/api/orders/create
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "userId": 999999,
+  "customerOrderId": "ATTACKER_ORDER_ID",
+  "totalAmount": 1,
+  "discountAmount": 999999,
+  "paymentStatus": "PAID",
+  "orderStatus": "DELIVERED",
+  "customer": {
+    "name": "Aarav Sharma",
+    "email": "aarav@example.com",
+    "phone": "9876543210"
+  },
+  "address": {
+    "type": "SHIPPING",
+    "line1": "221 MG Road",
+    "city": "Bengaluru",
+    "state": "Karnataka",
+    "pincode": "560001",
+    "country": "India"
+  },
+  "items": [
+    {
+      "productId": {{productId}},
+      "quantity": 1,
+      "totalPrice": 1,
+      "customizations": [
+        {
+          "customizationOptionId": {{requiredOptionId}},
+          "customizationValueId": {{validValueId}}
+        }
+      ]
+    }
+  ],
+  "payment": {
+    "method": "COD",
+    "status": "SUCCESS"
+  },
+  "couponCode": "ANY_CODE"
+}
+
+###
+
+# Success: valid CUSTOMER request should return 201 and CustomerOrderId format YYMMDDXXXXX.
+POST {{backend_HostAddress}}/api/orders/create
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "customer": {
+    "name": "Aarav Sharma",
+    "email": "aarav@example.com",
+    "phone": "9876543210"
+  },
+  "address": {
+    "type": "SHIPPING",
+    "line1": "221 MG Road",
+    "city": "Bengaluru",
+    "state": "Karnataka",
+    "pincode": "560001",
+    "country": "India"
+  },
+  "items": [
+    {
+      "productId": {{productId}},
+      "quantity": 1,
+      "customizations": [
+        {
+          "customizationOptionId": {{requiredOptionId}},
+          "customizationValueId": {{validValueId}}
+        }
+      ]
+    }
+  ],
+  "payment": { "method": "COD" },
+  "couponCode": "WELCOME500"
+}

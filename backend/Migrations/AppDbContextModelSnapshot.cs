@@ -266,8 +266,7 @@ namespace backend.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.HasIndex("SKU")
-                        .IsUnique();
+                    b.HasIndex("SKU");
 
                     b.ToTable("OrderItems", null, t =>
                         {
@@ -323,6 +322,35 @@ namespace backend.Migrations
                     b.HasIndex("OrderItemId");
 
                     b.ToTable("OrderItemCustomizations");
+                });
+
+            modelBuilder.Entity("backend.Models.Orders.OrderNumberSequence", b =>
+                {
+                    b.Property<string>("OrderNumberSequencesId")
+                        .HasColumnType("varchar");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<int>("LastSequenceNumber")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly>("SequenceDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.HasKey("OrderNumberSequencesId");
+
+                    b.HasIndex("SequenceDate")
+                        .IsUnique();
+
+                    b.ToTable("OrderNumberSequences");
                 });
 
             modelBuilder.Entity("backend.Models.Orders.OrderStatusLog", b =>

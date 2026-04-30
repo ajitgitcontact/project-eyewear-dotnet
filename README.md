@@ -6,7 +6,7 @@ ASP.NET Core Web API with Entity Framework Core and Supabase PostgreSQL for an e
 
 | Dependency | Version | Install |
 |---|---|---|
-| [.NET SDK](https://dotnet.microsoft.com/download/dotnet/9.0) | 9.0+ | Download from link |
+| [.NET SDK](https://dotnet.microsoft.com/download/dotnet/10.0) | 10.0+ | Download from link |
 | [EF Core CLI](https://learn.microsoft.com/en-us/ef/core/cli/dotnet) | 9.0+ | `dotnet tool install --global dotnet-ef` |
 | [Git](https://git-scm.com/) | 2.x+ | Download from link |
 | [PostgreSQL database](https://supabase.com/) | 15+ | Supabase free tier or local PostgreSQL |
@@ -17,7 +17,7 @@ ASP.NET Core Web API with Entity Framework Core and Supabase PostgreSQL for an e
 |---|---|---|
 | `Npgsql.EntityFrameworkCore.PostgreSQL` | 9.0.x | PostgreSQL EF Core provider |
 | `Microsoft.EntityFrameworkCore.Tools` | 9.0.x | EF Core migrations CLI |
-| `Microsoft.AspNetCore.OpenApi` | 9.0.x | OpenAPI spec generation |
+| `Microsoft.AspNetCore.OpenApi` | 9.0.14 | OpenAPI spec generation |
 | `Swashbuckle.AspNetCore.SwaggerUI` | 10.1.7 | Swagger UI |
 | `BCrypt.Net-Next` | 4.1.0 | Password hashing |
 | `DotNetEnv` | 3.1.1 | `.env` file support |
@@ -131,7 +131,7 @@ ConnectionStrings__DefaultConnection=Host=localhost;Port=5432;Database=eyewear;U
 dotnet ef database update
 ```
 
-This creates all tables: `Users`, `Products`, `CustomizationOptions`, `CustomizationValues`, `ProductImages`, `CustomizationImages`.
+This creates all tables including `Users`, product/customization tables, order tables, and `OrderNumberSequences`.
 
 ### 6. Run the application
 
@@ -200,6 +200,443 @@ Token expiry is set to 1 hour.
 #### Ownership Rule
 
 For user profile endpoints, CUSTOMER can access only their own user record.
+
+### Orders API
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/api/orders/create` | Create a complete checkout order in one transaction |
+
+#### Authentication
+
+`POST /api/orders/create` requires a Bearer JWT.
+
+Allowed roles:
+
+- `CUSTOMER`
+- `ADMIN`
+- `SUPER_ADMIN`
+
+The frontend must not send `userId`. The backend reads the authenticated user id from the JWT `NameIdentifier` claim. Any frontend-provided `userId`, `customerOrderId`, `totalAmount`, item total, discount amount, `paymentStatus`, or `orderStatus` fields are not part of the request DTO and are ignored by model binding.
+
+#### Request Shape
+
+```json
+{
+  "customer": {
+    "name": "Aarav Sharma",
+    "email": "aarav@example.com",
+    "phone": "9876543210"
+  },
+  "address": {
+    "type": "SHIPPING",
+    "line1": "221 MG Road",
+    "line2": "Near Metro Station",
+    "city": "Bengaluru",
+    "state": "Karnataka",
+    "pincode": "560001",
+    "country": "India"
+  },
+  "items": [
+    {
+      "productId": 1,
+      "quantity": 1,
+      "customizations": [
+        {
+          "customizationOptionId": 1,
+          "customizationValueId": 1
+        }
+      ]
+    }
+  ],
+  "prescription": {
+    "rightSphere": -1.25,
+    "rightCylinder": -0.5,
+    "rightAxis": 90,
+    "leftSphere": -1.0,
+    "leftCylinder": -0.25,
+    "leftAxis": 80,
+    "pd": 62,
+    "notes": "Use latest prescription."
+  },
+  "payment": {
+    "method": "COD",
+    "transactionId": null
+  },
+  "couponCode": "WELCOME500",
+  "notes": "Leave package with security."
+}
+```
+
+Required fields:
+
+- `customer.name`
+- `customer.email`
+- `address.line1`, `city`, `state`, `pincode`, `country`
+- At least one item in `items`
+- `items[].productId`
+- `items[].quantity` greater than `0`
+- `payment.method`
+
+Optional fields:
+
+- `customer.phone`
+- `address.line2`
+- `items[].customizations`
+- `prescription`
+- `payment.transactionId`
+- `couponCode` or `discountCode`
+- `notes`
+
+#### Response Shape
+
+```json
+{
+  "customerOrderId": "26050100001",
+  "subtotal": 3000,
+  "discountAmount": 0,
+  "finalAmount": 3000,
+  "order": {
+    "ordersId": "orders_...",
+    "customerOrderId": "26050100001",
+    "userId": 12,
+    "customerName": "Aarav Sharma",
+    "customerEmail": "aarav@example.com",
+    "customerPhone": "9876543210",
+    "totalAmount": 3000,
+    "paymentStatus": "PENDING",
+    "orderStatus": "CREATED",
+    "notes": "Leave package with security.",
+    "createdAt": "2026-05-01T10:00:00Z",
+    "updatedAt": "2026-05-01T10:00:00Z"
+  },
+  "address": {},
+  "items": [
+    {
+      "item": {},
+      "customizations": []
+    }
+  ],
+  "prescription": {},
+  "payment": {
+    "paymentsId": "payments_...",
+    "customerOrderId": "26050100001",
+    "method": "COD",
+    "transactionId": null,
+    "amount": 3000,
+    "status": "INITIATED",
+    "createdAt": "2026-05-01T10:00:00Z",
+    "updatedAt": "2026-05-01T10:00:00Z"
+  },
+  "statusLog": {}
+}
+```
+
+#### CustomerOrderId Generation
+
+`CustomerOrderId` is generated only by the backend in this format:
+
+```
+YYMMDDXXXXX
+```
+
+Example:
+
+```
+26050100001
+```
+
+The sequence resets daily and supports up to `99999` orders per server local date. The `OrderNumberSequences` table stores one row per date:
+
+| Column | Purpose |
+|---|---|
+| `OrderNumberSequencesId` | Primary key |
+| `SequenceDate` | Server local date for the sequence, unique |
+| `LastSequenceNumber` | Last number issued for that date |
+| `CreatedAt` | Row creation timestamp |
+| `UpdatedAt` | Last sequence update timestamp |
+
+Generation uses a PostgreSQL upsert on `SequenceDate`, so concurrent requests do not receive duplicate committed IDs. `Orders.CustomerOrderId` also has a unique index.
+
+#### Pricing And Discounts
+
+The backend calculates all pricing:
+
+- Item unit price = `Products.BasePrice + selected CustomizationValues.AdditionalPrice`
+- Item total = unit price * quantity
+- Subtotal = sum of item totals
+- Discount amount = returned by `IDiscountService`
+- Final amount = subtotal - discount amount
+
+Current discount status:
+
+- No `Coupons`, `DiscountRules`, `ProductDiscounts`, `CartOffers`, or similar tables currently exist.
+- No discount entities were added.
+- `DiscountService` is a placeholder extension point.
+- `couponCode` and `discountCode` may be sent by the frontend, but currently no eligibility check, expiry check, active/inactive check, usage limit, or amount calculation exists.
+- Current behavior is always `discountAmount = 0` and `finalAmount = subtotal`.
+- Invalid, expired, or inactive coupon codes cannot be detected yet because there is no discount schema.
+
+Pending discount TODOs:
+
+- Add coupon/discount tables.
+- Add active/expiry/min-order/usage-limit validation.
+- Add product-level, order-value, and user-specific discount rules.
+- Decide whether invalid coupon codes should fail with `400` or be ignored.
+
+#### Validation Rules
+
+The API validates:
+
+- Authenticated user exists and is active.
+- Payload contains customer, address, payment, and at least one item.
+- Product exists, is active, and has enough available stock.
+- Required product customizations are present.
+- Customization option belongs to the selected product.
+- Customization value belongs to the selected product and option.
+- Prescription is optional when at least one selected product has `HasPrescription = true`.
+- Prescription is rejected when none of the selected products support prescriptions.
+- Prescription axis values must be `0` to `180`; `PD` must be non-negative.
+- Final amount cannot be negative or inconsistent with subtotal and discount.
+
+Payment and order statuses are backend-controlled:
+
+- New orders start with `OrderStatus.CREATED`.
+- New orders start with `PaymentStatus.PENDING`.
+- New payment records start with `PaymentTxnStatus.INITIATED`.
+
+#### Transaction And Rollback
+
+The full order creation flow is wrapped in a database transaction. If any step fails, the transaction rolls back and no partial order data should remain.
+
+Steps inside the transaction:
+
+1. Validate request.
+2. Generate `CustomerOrderId`.
+3. Calculate totals.
+4. Apply discount service.
+5. Create order.
+6. Create items.
+7. Create item customizations.
+8. Create address.
+9. Create optional prescription.
+10. Create payment.
+11. Create status log.
+12. Atomically update inventory.
+13. Commit.
+
+Inventory is updated with a conditional SQL update so concurrent orders cannot decrement stock below zero.
+
+#### Logging
+
+The controller logs request received, authenticated `UserId`, and completion. The business service logs validation, ID generation, totals, discount application, every creation step, transaction start/commit, success, and rollback failures.
+
+Sensitive payment data is not logged. The service logs payment method/status and internal payment id, but not card data. The current request DTO does not accept card numbers, CVV, UPI PIN, or similar sensitive fields.
+
+#### Error Responses
+
+Errors are returned by `GlobalExceptionMiddleware` as:
+
+```json
+{
+  "message": "Product not found.",
+  "correlationId": "0HN..."
+}
+```
+
+Common status codes:
+
+| Status | Meaning |
+|---|---|
+| `400` | Invalid payload, missing required data, invalid customization, invalid prescription |
+| `401` | Missing/invalid Bearer token |
+| `403` | Authenticated user does not have an allowed role |
+| `404` | User or product not found |
+| `409` | Daily sequence exhausted, duplicate order id, or stock conflict |
+| `500` | Unexpected server error |
+
+Example failure:
+
+```json
+{
+  "message": "Customization value does not belong to the provided customization option.",
+  "correlationId": "0HN7ABC123"
+}
+```
+
+### Order Fetch APIs
+
+| Method | Endpoint | Roles | Description |
+|---|---|---|---|
+| `GET` | `/api/orders/{customerOrderId}` | CUSTOMER, ADMIN, SUPER_ADMIN | Fetch one complete order |
+| `GET` | `/api/orders` | ADMIN, SUPER_ADMIN | Search/list all orders for admin panel |
+| `GET` | `/api/customer/orders` | CUSTOMER | List authenticated customer's own orders |
+
+#### GET `/api/orders/{customerOrderId}`
+
+Fetches one complete order by backend-generated `CustomerOrderId`.
+
+Rules:
+
+- `customerOrderId` is required and trimmed.
+- Format must be `YYMMDDXXXXX`, for example `26050100001`.
+- `CUSTOMER` can fetch only their own order.
+- `ADMIN` and `SUPER_ADMIN` can fetch any order.
+- User id is always read from JWT; it is never accepted from query/body.
+
+Customer response includes:
+
+- Order summary
+- Items and item customizations
+- Addresses
+- Prescriptions if available
+- Status logs
+- Limited payment details only: `method`, `status`, `amount`, `createdAt`
+
+Admin/Super Admin response includes:
+
+- Full order summary
+- Items and item customizations
+- Addresses
+- Prescriptions
+- Status logs
+- Payment details from the current `Payments` model, including `paymentsId` and `transactionId`
+
+Highly confidential payment secrets must not be added to response DTOs or logs. The current payment model does not contain card numbers, CVV, UPI PIN, gateway raw response, or similar secrets.
+
+Example:
+
+```http
+GET /api/orders/26050100001
+Authorization: Bearer <token>
+```
+
+Example customer payment response:
+
+```json
+{
+  "customerPayments": [
+    {
+      "method": "COD",
+      "status": "INITIATED",
+      "amount": 3000,
+      "createdAt": "2026-05-01T10:00:00Z"
+    }
+  ]
+}
+```
+
+Example admin payment response:
+
+```json
+{
+  "adminPayments": [
+    {
+      "paymentsId": "payments_...",
+      "customerOrderId": "26050100001",
+      "method": "COD",
+      "transactionId": "provider-reference",
+      "amount": 3000,
+      "status": "INITIATED",
+      "createdAt": "2026-05-01T10:00:00Z",
+      "updatedAt": "2026-05-01T10:00:00Z"
+    }
+  ]
+}
+```
+
+#### GET `/api/orders`
+
+Admin/Super Admin order search for the admin order management page.
+
+Query parameters:
+
+| Parameter | Description |
+|---|---|
+| `fromCreatedDate` | Include orders where `CreatedAt >= fromCreatedDate` |
+| `toCreatedDate` | Include orders where `CreatedAt <= toCreatedDate` |
+| `orderStatus` | Filter by `CREATED`, `CONFIRMED`, `SHIPPED`, `DELIVERED`, `CANCELLED` |
+| `paymentStatus` | Filter by `PENDING`, `PAID`, `FAILED` |
+| `customerOrderId` | Exact customer order id |
+| `email` | Partial customer email match |
+| `contactNumber` | Partial customer phone match |
+| `userId` | Exact user id |
+| `pageNumber` | Default `1`; must be greater than `0` |
+| `pageSize` | Default `20`; must be `1` to `100` |
+
+Example:
+
+```http
+GET /api/orders?fromCreatedDate=2026-05-01&toCreatedDate=2026-05-31&orderStatus=CREATED&paymentStatus=PENDING&pageNumber=1&pageSize=20
+Authorization: Bearer <admin-token>
+```
+
+Example response:
+
+```json
+{
+  "totalCount": 42,
+  "pageNumber": 1,
+  "pageSize": 20,
+  "orders": [
+    {
+      "ordersId": "orders_...",
+      "customerOrderId": "26050100001",
+      "userId": 12,
+      "customerName": "Aarav Sharma",
+      "customerEmail": "aarav@example.com",
+      "customerPhone": "9876543210",
+      "totalAmount": 3000,
+      "paymentStatus": "PENDING",
+      "orderStatus": "CREATED",
+      "createdAt": "2026-05-01T10:00:00Z",
+      "updatedAt": "2026-05-01T10:00:00Z"
+    }
+  ]
+}
+```
+
+#### GET `/api/customer/orders`
+
+Customer "My Orders" endpoint. It always uses the JWT user id and returns only orders where `Orders.UserId` matches the authenticated customer.
+
+Query parameters:
+
+| Parameter | Description |
+|---|---|
+| `fromCreatedDate` | Include orders where `CreatedAt >= fromCreatedDate` |
+| `toCreatedDate` | Include orders where `CreatedAt <= toCreatedDate` |
+| `orderStatus` | Optional order status filter |
+| `paymentStatus` | Optional payment status filter |
+| `pageNumber` | Default `1`; must be greater than `0` |
+| `pageSize` | Default `20`; must be `1` to `100` |
+
+Example:
+
+```http
+GET /api/customer/orders?pageNumber=1&pageSize=20
+Authorization: Bearer <customer-token>
+```
+
+Example response:
+
+```json
+{
+  "totalCount": 3,
+  "pageNumber": 1,
+  "pageSize": 20,
+  "orders": [
+    {
+      "customerOrderId": "26050100001",
+      "totalAmount": 3000,
+      "paymentStatus": "PENDING",
+      "orderStatus": "CREATED",
+      "createdAt": "2026-05-01T10:00:00Z",
+      "updatedAt": "2026-05-01T10:00:00Z"
+    }
+  ]
+}
+```
 
 ### Products API
 
@@ -395,8 +832,8 @@ Logging is configured in `appsettings.json` and `appsettings.Development.json`:
 
 ## Tech Stack
 
-- **.NET 9** — ASP.NET Core Web API (controller-based)
-- **Entity Framework Core 9** — ORM with code-first migrations
+- **.NET 10 / `net10.0`** — ASP.NET Core Web API (controller-based)
+- **Entity Framework Core 9 packages** — ORM with code-first migrations
 - **Npgsql** — PostgreSQL provider for EF Core
 - **Supabase** — Hosted PostgreSQL database
 - **Serilog 9.0.0** — Structured logging with Console and File sinks

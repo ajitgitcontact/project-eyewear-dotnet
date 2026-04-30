@@ -24,6 +24,7 @@ public class AppDbContext : DbContext
     public DbSet<OrderAddress> OrderAddresses => Set<OrderAddress>();
     public DbSet<OrderStatusLog> OrderStatusLogs => Set<OrderStatusLog>();
     public DbSet<CustomerPrescription> CustomerPrescriptions => Set<CustomerPrescription>();
+    public DbSet<OrderNumberSequence> OrderNumberSequences => Set<OrderNumberSequence>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -92,7 +93,7 @@ public class AppDbContext : DbContext
             entity.HasKey(oi => oi.OrderItemsId);
             entity.HasIndex(oi => oi.CustomerOrderId);
             entity.HasIndex(oi => oi.ProductId);
-            entity.HasIndex(oi => oi.SKU).IsUnique();
+            entity.HasIndex(oi => oi.SKU);
 
             entity.Property(oi => oi.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(oi => oi.UpdatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
@@ -212,6 +213,15 @@ public class AppDbContext : DbContext
                 .HasForeignKey(cp => cp.CustomerOrderId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
+
+        modelBuilder.Entity<OrderNumberSequence>(entity =>
+        {
+            entity.HasKey(ons => ons.OrderNumberSequencesId);
+            entity.HasIndex(ons => ons.SequenceDate).IsUnique();
+
+            entity.Property(ons => ons.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(ons => ons.UpdatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
     }
 
     public override int SaveChanges()
@@ -271,6 +281,11 @@ public class AppDbContext : DbContext
         var customerPrescriptionEntries = ChangeTracker.Entries<CustomerPrescription>()
             .Where(e => e.State == EntityState.Modified);
         foreach (var entry in customerPrescriptionEntries)
+            entry.Entity.UpdatedAt = DateTime.UtcNow;
+
+        var orderNumberSequenceEntries = ChangeTracker.Entries<OrderNumberSequence>()
+            .Where(e => e.State == EntityState.Modified);
+        foreach (var entry in orderNumberSequenceEntries)
             entry.Entity.UpdatedAt = DateTime.UtcNow;
     }
 }

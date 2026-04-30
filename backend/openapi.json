@@ -1,4 +1,4 @@
-﻿{
+{
   "openapi": "3.0.1",
   "info": {
     "title": "backend | v1",
@@ -42,6 +42,114 @@
         }
       }
     },
+    "/api/customer/orders": {
+      "get": {
+        "tags": [
+          "Customer Orders"
+        ],
+        "parameters": [
+          {
+            "name": "FromCreatedDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "ToCreatedDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "OrderStatus",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "PaymentStatus",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "PageNumber",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerOrderListResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": { }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": [ ]
+          }
+        ]
+      }
+    },
     "/api/DbTest": {
       "get": {
         "tags": [
@@ -52,6 +160,322 @@
             "description": "OK"
           }
         }
+      }
+    },
+    "/api/orders/create": {
+      "post": {
+        "tags": [
+          "Orders"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderCreationRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderCreationRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderCreationRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderCreationResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": { }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": [ ]
+          }
+        ]
+      }
+    },
+    "/api/orders": {
+      "get": {
+        "tags": [
+          "Orders"
+        ],
+        "parameters": [
+          {
+            "name": "FromCreatedDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "ToCreatedDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "OrderStatus",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "PaymentStatus",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "CustomerOrderId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Email",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ContactNumber",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "UserId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageNumber",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderSearchResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": { }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": [ ]
+          }
+        ]
+      }
+    },
+    "/api/orders/{customerOrderId}": {
+      "get": {
+        "tags": [
+          "Orders"
+        ],
+        "parameters": [
+          {
+            "name": "customerOrderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompleteOrderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": { }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": [ ]
+          }
+        ]
       }
     },
     "/api/Products": {
@@ -83,7 +507,12 @@
           "200": {
             "description": "OK"
           }
-        }
+        },
+        "security": [
+          {
+            "BearerAuth": [ ]
+          }
+        ]
       },
       "get": {
         "tags": [
@@ -104,6 +533,43 @@
             "description": "OK"
           }
         }
+      }
+    },
+    "/api/Products/simple": {
+      "post": {
+        "tags": [
+          "Products"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProductDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProductDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProductDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": [ ]
+          }
+        ]
       }
     },
     "/api/Products/{id}": {
@@ -167,7 +633,12 @@
           "200": {
             "description": "OK"
           }
-        }
+        },
+        "security": [
+          {
+            "BearerAuth": [ ]
+          }
+        ]
       },
       "delete": {
         "tags": [
@@ -188,7 +659,12 @@
           "200": {
             "description": "OK"
           }
-        }
+        },
+        "security": [
+          {
+            "BearerAuth": [ ]
+          }
+        ]
       }
     },
     "/api/Products/sku/{sku}": {
@@ -274,7 +750,12 @@
           "200": {
             "description": "OK"
           }
-        }
+        },
+        "security": [
+          {
+            "BearerAuth": [ ]
+          }
+        ]
       }
     },
     "/api/Products/options/{optionId}": {
@@ -338,7 +819,12 @@
           "200": {
             "description": "OK"
           }
-        }
+        },
+        "security": [
+          {
+            "BearerAuth": [ ]
+          }
+        ]
       },
       "delete": {
         "tags": [
@@ -359,7 +845,12 @@
           "200": {
             "description": "OK"
           }
-        }
+        },
+        "security": [
+          {
+            "BearerAuth": [ ]
+          }
+        ]
       }
     },
     "/api/Products/options/{optionId}/values": {
@@ -423,7 +914,12 @@
           "200": {
             "description": "OK"
           }
-        }
+        },
+        "security": [
+          {
+            "BearerAuth": [ ]
+          }
+        ]
       }
     },
     "/api/Products/values/{valueId}": {
@@ -487,7 +983,12 @@
           "200": {
             "description": "OK"
           }
-        }
+        },
+        "security": [
+          {
+            "BearerAuth": [ ]
+          }
+        ]
       },
       "delete": {
         "tags": [
@@ -508,7 +1009,12 @@
           "200": {
             "description": "OK"
           }
-        }
+        },
+        "security": [
+          {
+            "BearerAuth": [ ]
+          }
+        ]
       }
     },
     "/api/Products/{productId}/images": {
@@ -572,7 +1078,12 @@
           "200": {
             "description": "OK"
           }
-        }
+        },
+        "security": [
+          {
+            "BearerAuth": [ ]
+          }
+        ]
       }
     },
     "/api/Products/images/{imageId}": {
@@ -636,7 +1147,12 @@
           "200": {
             "description": "OK"
           }
-        }
+        },
+        "security": [
+          {
+            "BearerAuth": [ ]
+          }
+        ]
       },
       "delete": {
         "tags": [
@@ -657,7 +1173,12 @@
           "200": {
             "description": "OK"
           }
-        }
+        },
+        "security": [
+          {
+            "BearerAuth": [ ]
+          }
+        ]
       }
     },
     "/api/Products/{productId}/customization-images": {
@@ -721,7 +1242,12 @@
           "200": {
             "description": "OK"
           }
-        }
+        },
+        "security": [
+          {
+            "BearerAuth": [ ]
+          }
+        ]
       }
     },
     "/api/Products/customization-images/{imageId}": {
@@ -785,7 +1311,12 @@
           "200": {
             "description": "OK"
           }
-        }
+        },
+        "security": [
+          {
+            "BearerAuth": [ ]
+          }
+        ]
       },
       "delete": {
         "tags": [
@@ -806,7 +1337,12 @@
           "200": {
             "description": "OK"
           }
-        }
+        },
+        "security": [
+          {
+            "BearerAuth": [ ]
+          }
+        ]
       }
     },
     "/api/Users/login": {
@@ -880,7 +1416,12 @@
           "200": {
             "description": "OK"
           }
-        }
+        },
+        "security": [
+          {
+            "BearerAuth": [ ]
+          }
+        ]
       }
     },
     "/api/Users/{id}": {
@@ -903,7 +1444,12 @@
           "200": {
             "description": "OK"
           }
-        }
+        },
+        "security": [
+          {
+            "BearerAuth": [ ]
+          }
+        ]
       },
       "put": {
         "tags": [
@@ -944,7 +1490,12 @@
           "200": {
             "description": "OK"
           }
-        }
+        },
+        "security": [
+          {
+            "BearerAuth": [ ]
+          }
+        ]
       },
       "delete": {
         "tags": [
@@ -965,7 +1516,12 @@
           "200": {
             "description": "OK"
           }
-        }
+        },
+        "security": [
+          {
+            "BearerAuth": [ ]
+          }
+        ]
       }
     },
     "/api/Users/email/{email}": {
@@ -987,12 +1543,367 @@
           "200": {
             "description": "OK"
           }
-        }
+        },
+        "security": [
+          {
+            "BearerAuth": [ ]
+          }
+        ]
       }
     }
   },
   "components": {
     "schemas": {
+      "AddressType": {
+        "type": "integer"
+      },
+      "AdminPaymentDto": {
+        "type": "object",
+        "properties": {
+          "paymentsId": {
+            "type": "string"
+          },
+          "customerOrderId": {
+            "type": "string"
+          },
+          "method": {
+            "$ref": "#/components/schemas/PaymentMethod"
+          },
+          "transactionId": {
+            "type": "string",
+            "nullable": true
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PaymentTxnStatus"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CompleteOrderAddressDto": {
+        "type": "object",
+        "properties": {
+          "orderAddressesId": {
+            "type": "string"
+          },
+          "customerOrderId": {
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/AddressType"
+          },
+          "line1": {
+            "type": "string"
+          },
+          "line2": {
+            "type": "string",
+            "nullable": true
+          },
+          "city": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "pincode": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CompleteOrderCustomizationDto": {
+        "type": "object",
+        "properties": {
+          "orderItemCustomizationsId": {
+            "type": "string"
+          },
+          "orderItemId": {
+            "type": "string"
+          },
+          "customizationOptionId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "customizationValueId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "type": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CompleteOrderItemDto": {
+        "type": "object",
+        "properties": {
+          "orderItemsId": {
+            "type": "string"
+          },
+          "customerOrderId": {
+            "type": "string"
+          },
+          "productId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "productName": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "price": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalPrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "customizations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CompleteOrderCustomizationDto"
+            }
+          }
+        }
+      },
+      "CompleteOrderPrescriptionDto": {
+        "type": "object",
+        "properties": {
+          "customerPrescriptionsId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "customerOrderId": {
+            "type": "string"
+          },
+          "rightSphere": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "rightCylinder": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "rightAxis": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "rightAdd": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "leftSphere": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "leftCylinder": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "leftAxis": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "leftAdd": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "pd": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CompleteOrderResponseDto": {
+        "type": "object",
+        "properties": {
+          "order": {
+            "$ref": "#/components/schemas/CompleteOrderSummaryDto"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CompleteOrderItemDto"
+            }
+          },
+          "addresses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CompleteOrderAddressDto"
+            }
+          },
+          "prescriptions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CompleteOrderPrescriptionDto"
+            }
+          },
+          "statusLogs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CompleteOrderStatusLogDto"
+            }
+          },
+          "customerPayments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CustomerSafePaymentDto"
+            },
+            "nullable": true
+          },
+          "adminPayments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminPaymentDto"
+            },
+            "nullable": true
+          }
+        }
+      },
+      "CompleteOrderStatusLogDto": {
+        "type": "object",
+        "properties": {
+          "orderStatusLogsId": {
+            "type": "string"
+          },
+          "customerOrderId": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/OrderStatus"
+          },
+          "comment": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CompleteOrderSummaryDto": {
+        "type": "object",
+        "properties": {
+          "ordersId": {
+            "type": "string"
+          },
+          "customerOrderId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "customerName": {
+            "type": "string"
+          },
+          "customerEmail": {
+            "type": "string"
+          },
+          "customerPhone": {
+            "type": "string",
+            "nullable": true
+          },
+          "totalAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "paymentStatus": {
+            "$ref": "#/components/schemas/PaymentStatus"
+          },
+          "orderStatus": {
+            "$ref": "#/components/schemas/OrderStatus"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "CreateCustomizationImageDto": {
         "required": [
           "productId",
@@ -1215,6 +2126,64 @@
           }
         }
       },
+      "CreateProductDto": {
+        "required": [
+          "sku",
+          "name",
+          "category",
+          "basePrice"
+        ],
+        "type": "object",
+        "properties": {
+          "sku": {
+            "maxLength": 50,
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 200,
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "brand": {
+            "maxLength": 100,
+            "type": "string",
+            "nullable": true
+          },
+          "category": {
+            "maxLength": 100,
+            "type": "string"
+          },
+          "basePrice": {
+            "minimum": 0.01,
+            "type": "number",
+            "format": "double"
+          },
+          "availableQuantity": {
+            "maximum": 2147483647,
+            "minimum": 0,
+            "type": "integer",
+            "format": "int32"
+          },
+          "soldQuantity": {
+            "maximum": 2147483647,
+            "minimum": 0,
+            "type": "integer",
+            "format": "int32"
+          },
+          "priority": {
+            "maximum": 2147483647,
+            "minimum": 0,
+            "type": "integer",
+            "format": "int32"
+          },
+          "hasPrescription": {
+            "type": "boolean"
+          }
+        }
+      },
       "CreateProductImageDto": {
         "required": [
           "productId",
@@ -1275,6 +2244,147 @@
           }
         }
       },
+      "CustomerOrderListItemDto": {
+        "type": "object",
+        "properties": {
+          "customerOrderId": {
+            "type": "string"
+          },
+          "totalAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "paymentStatus": {
+            "$ref": "#/components/schemas/PaymentStatus"
+          },
+          "orderStatus": {
+            "$ref": "#/components/schemas/OrderStatus"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CustomerOrderListResponseDto": {
+        "type": "object",
+        "properties": {
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "orders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CustomerOrderListItemDto"
+            }
+          }
+        }
+      },
+      "CustomerPrescriptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "customerPrescriptionsId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "customerOrderId": {
+            "type": "string"
+          },
+          "rightSphere": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "rightCylinder": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "rightAxis": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "rightAdd": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "leftSphere": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "leftCylinder": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "leftAxis": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "leftAdd": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "pd": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "nullable": true
+      },
+      "CustomerSafePaymentDto": {
+        "type": "object",
+        "properties": {
+          "method": {
+            "$ref": "#/components/schemas/PaymentMethod"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PaymentTxnStatus"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "LoginDto": {
         "required": [
           "email",
@@ -1287,6 +2397,613 @@
           },
           "password": {
             "type": "string"
+          }
+        }
+      },
+      "OrderAddressResponseDto": {
+        "type": "object",
+        "properties": {
+          "orderAddressesId": {
+            "type": "string"
+          },
+          "customerOrderId": {
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/AddressType"
+          },
+          "line1": {
+            "type": "string"
+          },
+          "line2": {
+            "type": "string",
+            "nullable": true
+          },
+          "city": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "pincode": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "OrderCreationAddressDto": {
+        "required": [
+          "line1",
+          "city",
+          "state",
+          "pincode",
+          "country"
+        ],
+        "type": "object",
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/AddressType"
+          },
+          "line1": {
+            "maxLength": 250,
+            "type": "string"
+          },
+          "line2": {
+            "maxLength": 250,
+            "type": "string",
+            "nullable": true
+          },
+          "city": {
+            "maxLength": 100,
+            "type": "string"
+          },
+          "state": {
+            "maxLength": 100,
+            "type": "string"
+          },
+          "pincode": {
+            "maxLength": 20,
+            "type": "string"
+          },
+          "country": {
+            "maxLength": 100,
+            "type": "string"
+          }
+        }
+      },
+      "OrderCreationCustomerDto": {
+        "required": [
+          "name",
+          "email"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "maxLength": 200,
+            "type": "string"
+          },
+          "email": {
+            "maxLength": 150,
+            "type": "string"
+          },
+          "phone": {
+            "maxLength": 20,
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "OrderCreationCustomizationDto": {
+        "type": "object",
+        "properties": {
+          "customizationOptionId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "customizationValueId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "type": {
+            "maxLength": 100,
+            "type": "string",
+            "nullable": true
+          },
+          "value": {
+            "maxLength": 100,
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "OrderCreationItemDto": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "quantity": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "type": "integer",
+            "format": "int32"
+          },
+          "customizations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderCreationCustomizationDto"
+            }
+          }
+        }
+      },
+      "OrderCreationItemResponseDto": {
+        "type": "object",
+        "properties": {
+          "item": {
+            "$ref": "#/components/schemas/OrderItemResponseDto"
+          },
+          "customizations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderItemCustomizationResponseDto"
+            }
+          }
+        }
+      },
+      "OrderCreationPaymentDto": {
+        "type": "object",
+        "properties": {
+          "method": {
+            "$ref": "#/components/schemas/PaymentMethod"
+          },
+          "transactionId": {
+            "maxLength": 150,
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "OrderCreationPrescriptionDto": {
+        "type": "object",
+        "properties": {
+          "rightSphere": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "rightCylinder": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "rightAxis": {
+            "maximum": 180,
+            "minimum": 0,
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "rightAdd": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "leftSphere": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "leftCylinder": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "leftAxis": {
+            "maximum": 180,
+            "minimum": 0,
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "leftAdd": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "pd": {
+            "minimum": 0,
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "nullable": true
+      },
+      "OrderCreationRequestDto": {
+        "required": [
+          "customer",
+          "address",
+          "payment"
+        ],
+        "type": "object",
+        "properties": {
+          "customer": {
+            "$ref": "#/components/schemas/OrderCreationCustomerDto"
+          },
+          "address": {
+            "$ref": "#/components/schemas/OrderCreationAddressDto"
+          },
+          "items": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderCreationItemDto"
+            }
+          },
+          "prescription": {
+            "$ref": "#/components/schemas/OrderCreationPrescriptionDto"
+          },
+          "payment": {
+            "$ref": "#/components/schemas/OrderCreationPaymentDto"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "couponCode": {
+            "maxLength": 100,
+            "type": "string",
+            "nullable": true
+          },
+          "discountCode": {
+            "maxLength": 100,
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "nullable": true
+      },
+      "OrderCreationResponseDto": {
+        "type": "object",
+        "properties": {
+          "customerOrderId": {
+            "type": "string"
+          },
+          "subtotal": {
+            "type": "number",
+            "format": "double"
+          },
+          "discountAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "finalAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "order": {
+            "$ref": "#/components/schemas/OrderResponseDto"
+          },
+          "address": {
+            "$ref": "#/components/schemas/OrderAddressResponseDto"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderCreationItemResponseDto"
+            }
+          },
+          "prescription": {
+            "$ref": "#/components/schemas/CustomerPrescriptionResponseDto"
+          },
+          "payment": {
+            "$ref": "#/components/schemas/PaymentResponseDto"
+          },
+          "statusLog": {
+            "$ref": "#/components/schemas/OrderStatusLogResponseDto"
+          }
+        }
+      },
+      "OrderItemCustomizationResponseDto": {
+        "type": "object",
+        "properties": {
+          "orderItemCustomizationsId": {
+            "type": "string"
+          },
+          "orderItemId": {
+            "type": "string"
+          },
+          "customizationOptionId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "customizationValueId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "type": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "OrderItemResponseDto": {
+        "type": "object",
+        "properties": {
+          "orderItemsId": {
+            "type": "string"
+          },
+          "customerOrderId": {
+            "type": "string"
+          },
+          "productId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "productName": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "price": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalPrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "OrderResponseDto": {
+        "type": "object",
+        "properties": {
+          "ordersId": {
+            "type": "string"
+          },
+          "customerOrderId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "customerName": {
+            "type": "string"
+          },
+          "customerEmail": {
+            "type": "string"
+          },
+          "customerPhone": {
+            "type": "string",
+            "nullable": true
+          },
+          "totalAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "paymentStatus": {
+            "$ref": "#/components/schemas/PaymentStatus"
+          },
+          "orderStatus": {
+            "$ref": "#/components/schemas/OrderStatus"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "OrderSearchItemDto": {
+        "type": "object",
+        "properties": {
+          "ordersId": {
+            "type": "string"
+          },
+          "customerOrderId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "customerName": {
+            "type": "string"
+          },
+          "customerEmail": {
+            "type": "string"
+          },
+          "customerPhone": {
+            "type": "string",
+            "nullable": true
+          },
+          "totalAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "paymentStatus": {
+            "$ref": "#/components/schemas/PaymentStatus"
+          },
+          "orderStatus": {
+            "$ref": "#/components/schemas/OrderStatus"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "OrderSearchResponseDto": {
+        "type": "object",
+        "properties": {
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "orders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderSearchItemDto"
+            }
+          }
+        }
+      },
+      "OrderStatus": {
+        "type": "integer"
+      },
+      "OrderStatusLogResponseDto": {
+        "type": "object",
+        "properties": {
+          "orderStatusLogsId": {
+            "type": "string"
+          },
+          "customerOrderId": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/OrderStatus"
+          },
+          "comment": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PaymentMethod": {
+        "type": "integer"
+      },
+      "PaymentResponseDto": {
+        "type": "object",
+        "properties": {
+          "paymentsId": {
+            "type": "string"
+          },
+          "customerOrderId": {
+            "type": "string"
+          },
+          "method": {
+            "$ref": "#/components/schemas/PaymentMethod"
+          },
+          "transactionId": {
+            "type": "string",
+            "nullable": true
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PaymentTxnStatus"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PaymentStatus": {
+        "type": "integer"
+      },
+      "PaymentTxnStatus": {
+        "type": "integer"
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          },
+          "instance": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -1484,6 +3201,14 @@
           }
         }
       }
+    },
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "description": "JWT Bearer authentication. Enter only the token value.",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
     }
   },
   "tags": [
@@ -1491,7 +3216,13 @@
       "name": "Auth"
     },
     {
+      "name": "Customer Orders"
+    },
+    {
       "name": "DbTest"
+    },
+    {
+      "name": "Orders"
     },
     {
       "name": "Products"

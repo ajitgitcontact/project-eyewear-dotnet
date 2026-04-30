@@ -49,7 +49,6 @@ public class OrderItemService : IOrderItemService
 
         await ValidateOrderExistsAsync(dto.CustomerOrderId);
         await ValidateProductExistsAsync(dto.ProductId);
-        await EnsureSkuAvailableAsync(dto.SKU);
 
         var item = new OrderItem
         {
@@ -82,8 +81,6 @@ public class OrderItemService : IOrderItemService
         }
 
         await ValidateProductExistsAsync(dto.ProductId);
-        if (!string.Equals(item.SKU, dto.SKU, StringComparison.Ordinal))
-            await EnsureSkuAvailableAsync(dto.SKU);
 
         item.ProductId = dto.ProductId;
         item.SKU = dto.SKU;
@@ -124,13 +121,6 @@ public class OrderItemService : IOrderItemService
         var exists = await _context.Products.AnyAsync(p => p.ProductId == productId);
         if (!exists)
             throw new NotFoundException("Product not found.");
-    }
-
-    private async Task EnsureSkuAvailableAsync(string sku)
-    {
-        var exists = await _context.OrderItems.AnyAsync(oi => oi.SKU == sku);
-        if (exists)
-            throw new ConflictException("An order item with this SKU already exists.");
     }
 
     private static OrderItemResponseDto MapToDto(OrderItem item)

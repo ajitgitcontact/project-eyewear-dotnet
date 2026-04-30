@@ -25,6 +25,13 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<IOrderAddressService, OrderAddressService>();
         services.AddScoped<IOrderStatusLogService, OrderStatusLogService>();
         services.AddScoped<ICustomerPrescriptionService, CustomerPrescriptionService>();
+        services.AddScoped<IOrderCreationService, OrderCreationService>();
+        services.AddScoped<IOrderCreationValidatorService, OrderCreationValidatorService>();
+        services.AddScoped<ICustomerOrderIdGeneratorService, CustomerOrderIdGeneratorService>();
+        services.AddScoped<IDiscountService, DiscountService>();
+        services.AddScoped<IFetchCompleteOrderService, FetchCompleteOrderService>();
+        services.AddScoped<IOrderSearchService, OrderSearchService>();
+        services.AddScoped<ICustomerOrderListService, CustomerOrderListService>();
 
         return services;
     }

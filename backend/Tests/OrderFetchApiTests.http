@@ -1,0 +1,143 @@
+@backend_HostAddress = http://localhost:5047
+@customerToken = <CUSTOMER_TOKEN>
+@otherCustomerToken = <OTHER_CUSTOMER_TOKEN>
+@adminToken = <ADMIN_TOKEN>
+@superAdminToken = <SUPER_ADMIN_TOKEN>
+@wrongRoleToken = <WRONG_ROLE_TOKEN>
+@customerOrderId = 26050100001
+@otherCustomerOrderId = 26050100002
+
+# Complete order: no token returns 401.
+GET {{backend_HostAddress}}/api/orders/{{customerOrderId}}
+Accept: application/json
+
+###
+
+# Complete order: wrong role returns 403.
+GET {{backend_HostAddress}}/api/orders/{{customerOrderId}}
+Authorization: Bearer {{wrongRoleToken}}
+Accept: application/json
+
+###
+
+# Complete order: customer can fetch own order.
+GET {{backend_HostAddress}}/api/orders/{{customerOrderId}}
+Authorization: Bearer {{customerToken}}
+Accept: application/json
+
+###
+
+# Complete order: customer cannot fetch another customer's order.
+GET {{backend_HostAddress}}/api/orders/{{otherCustomerOrderId}}
+Authorization: Bearer {{customerToken}}
+Accept: application/json
+
+###
+
+# Complete order: admin can fetch any order.
+GET {{backend_HostAddress}}/api/orders/{{customerOrderId}}
+Authorization: Bearer {{adminToken}}
+Accept: application/json
+
+###
+
+# Complete order: super admin can fetch any order.
+GET {{backend_HostAddress}}/api/orders/{{customerOrderId}}
+Authorization: Bearer {{superAdminToken}}
+Accept: application/json
+
+###
+
+# Complete order: invalid CustomerOrderId format returns 400.
+GET {{backend_HostAddress}}/api/orders/not-a-valid-id
+Authorization: Bearer {{adminToken}}
+Accept: application/json
+
+###
+
+# Complete order: non-existing CustomerOrderId returns 404.
+GET {{backend_HostAddress}}/api/orders/99123199999
+Authorization: Bearer {{adminToken}}
+Accept: application/json
+
+###
+
+# Admin order list: no token returns 401.
+GET {{backend_HostAddress}}/api/orders
+Accept: application/json
+
+###
+
+# Admin order list: customer role returns 403.
+GET {{backend_HostAddress}}/api/orders
+Authorization: Bearer {{customerToken}}
+Accept: application/json
+
+###
+
+# Admin order list: admin succeeds.
+GET {{backend_HostAddress}}/api/orders?pageNumber=1&pageSize=20
+Authorization: Bearer {{adminToken}}
+Accept: application/json
+
+###
+
+# Admin order list: filter by date/status/customer/email/contact/user id.
+GET {{backend_HostAddress}}/api/orders?fromCreatedDate=2026-05-01&toCreatedDate=2026-05-31&orderStatus=CREATED&paymentStatus=PENDING&customerOrderId={{customerOrderId}}&email=example&contactNumber=900&pageNumber=1&pageSize=20
+Authorization: Bearer {{adminToken}}
+Accept: application/json
+
+###
+
+# Admin order list: invalid date range fails.
+GET {{backend_HostAddress}}/api/orders?fromCreatedDate=2026-05-31&toCreatedDate=2026-05-01
+Authorization: Bearer {{adminToken}}
+Accept: application/json
+
+###
+
+# Admin order list: invalid page number fails.
+GET {{backend_HostAddress}}/api/orders?pageNumber=0&pageSize=20
+Authorization: Bearer {{adminToken}}
+Accept: application/json
+
+###
+
+# Admin order list: invalid page size fails.
+GET {{backend_HostAddress}}/api/orders?pageNumber=1&pageSize=101
+Authorization: Bearer {{adminToken}}
+Accept: application/json
+
+###
+
+# Customer order list: no token returns 401.
+GET {{backend_HostAddress}}/api/customer/orders
+Accept: application/json
+
+###
+
+# Customer order list: admin/super admin should receive 403.
+GET {{backend_HostAddress}}/api/customer/orders
+Authorization: Bearer {{adminToken}}
+Accept: application/json
+
+###
+
+# Customer order list: customer gets only own orders.
+GET {{backend_HostAddress}}/api/customer/orders?pageNumber=1&pageSize=20
+Authorization: Bearer {{customerToken}}
+Accept: application/json
+
+###
+
+# Customer order list: filters work.
+GET {{backend_HostAddress}}/api/customer/orders?fromCreatedDate=2026-05-01&toCreatedDate=2026-05-31&orderStatus=CREATED&paymentStatus=PENDING&pageNumber=1&pageSize=20
+Authorization: Bearer {{customerToken}}
+Accept: application/json
+
+###
+
+# Customer order list: invalid pagination fails.
+GET {{backend_HostAddress}}/api/customer/orders?pageNumber=0&pageSize=101
+Authorization: Bearer {{customerToken}}
+Accept: application/json
