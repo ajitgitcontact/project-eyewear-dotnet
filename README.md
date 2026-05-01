@@ -1,4 +1,4 @@
-# Project Eyewear - .NET Backend
+﻿# Project Eyewear - .NET Backend
 
 ASP.NET Core Web API with Entity Framework Core and Supabase PostgreSQL for an eyewear e-commerce platform.
 
@@ -31,50 +31,132 @@ ASP.NET Core Web API with Entity Framework Core and Supabase PostgreSQL for an e
 backend/
 ├── Application/
 │   ├── Abstractions/
-│   │   ├── Users/                  # IUserService
-│   │   └── Products/               # Product and customization service interfaces
-│   ├── DependencyInjection/        # Application layer DI registration
-│   └── Exceptions/                 # App exceptions (NotFound/Conflict/etc.)
-├── Controllers/                    # API controllers
-│   ├── ProductsController.cs       # Products CRUD + customization endpoints
-│   ├── UsersController.cs          # Users CRUD + login
-│   └── DbTestController.cs        # DB connectivity test
+│   │   ├── Users/                    # User and token service interfaces
+│   │   ├── Products/                 # Product/customization service interfaces
+│   │   └── Orders/                   # Order, discount, coupon, cart, wishlist interfaces
+│   ├── DependencyInjection/          # Application layer DI registration
+│   └── Exceptions/                   # App exceptions used by global middleware
+├── Constants/                        # Role constants
+├── Controllers/
+│   ├── AuthController.cs             # Customer signup
+│   ├── UsersController.cs            # Login and user management
+│   ├── ProductsController.cs         # Products, customization options/values/images
+│   ├── OrderCreationController.cs    # POST /api/orders/create
+│   ├── OrdersController.cs           # Order fetch, admin search, order logs
+│   ├── CustomerOrdersController.cs   # Customer my-orders list
+│   ├── DiscountsController.cs        # Admin discount management
+│   ├── CouponsController.cs          # Admin coupon management
+│   ├── CartController.cs             # Customer cart APIs
+│   ├── WishlistController.cs         # Customer wishlist APIs
+│   └── DbTestController.cs           # DB connectivity test
 ├── Data/
-│   └── AppDbContext.cs             # EF Core DbContext
-├── DTOs/                           # Data Transfer Objects
-│   ├── UserDtos/                   # CreateUser, UpdateUser, UserResponse, Login
-│   ├── ProductDtos/                # CreateProduct, UpdateProduct, ProductResponse,
-│   │                               # CreateFullProduct, FullProductResponse
-│   ├── CustomizationOptionDtos/    # Create, Update, Response
-│   ├── CustomizationValueDtos/     # Create, Update, Response
-│   ├── ProductImageDtos/           # Create, Update, Response
-│   └── CustomizationImageDtos/     # Create, Update, Response
-├── Models/                         # Entity models
-│   ├── User.cs
-│   └── Products/                   # Product, CustomizationOption, CustomizationValue,
-│                                   # ProductImage, CustomizationImage
+│   └── AppDbContext.cs               # EF Core DbContext and model configuration
+├── DTOs/
+│   ├── UserDtos/
+│   ├── ProductDtos/
+│   ├── DiscountDtos/                 # Admin discount DTOs
+│   ├── CouponDtos/                   # Admin coupon DTOs
+│   ├── OrderCreationDtos/            # Checkout/order creation DTOs
+│   ├── OrderFetchDtos/               # Complete order and list DTOs
+│   ├── OrderStatusLogDtos/
+│   ├── PaymentDtos/
+│   ├── CartDtos/
+│   └── WishlistDtos/
 ├── Infrastructure/
-│   ├── DependencyInjection/        # Infrastructure DI (DbContext, provider setup)
+│   ├── DependencyInjection/          # DbContext, token service, data seeder
 │   └── Services/
-│       ├── Users/                  # UserService implementation
-│       └── Products/               # Product and customization service implementations
-├── Migrations/                     # EF Core migrations
-├── wwwroot/images/products/        # Static product images
-├── Program.cs                      # App entry point + DI configuration
-├── .env                            # Environment variables (not in git)
-├── .env.example                    # Template for .env
-├── appsettings.json                # Base configuration
-└── appsettings.Development.json    # Dev configuration
+│       ├── Users/
+│       ├── Products/
+│       └── Orders/                   # Order, discount, coupon, cart, wishlist services
+├── Middleware/                       # Correlation id and global exception middleware
+├── Migrations/                       # EF Core migrations
+├── Models/
+│   ├── User.cs
+│   ├── Products/                     # Product, customization, image entities
+│   ├── Orders/                       # Orders, payments, discounts, coupons, logs
+│   ├── Carts/                        # Cart lifecycle and snapshot entities
+│   └── Wishlists/                    # Wishlist entities
+├── Tests/                            # HTTP smoke files and manual test plans
+├── logs/                             # Rolling Serilog files
+├── Program.cs                        # App entry point, JWT, Swagger/OpenAPI, middleware
+├── backend.csproj                    # net10.0 target framework
+├── .env                              # Environment variables, not for source control
+├── appsettings.json
+└── appsettings.Development.json
 ```
 
-Current order-domain additions live in the same structure:
+Current order-domain additions live in the same architecture:
 
-- `Application/Abstractions/Orders`: order creation/fetch, discounts, coupons, cart, and wishlist service contracts
-- `Infrastructure/Services/Orders`: order orchestration, discount/coupon logic, cart service, wishlist service, and order log query service
-- `Models/Orders`: orders, order items, payments, addresses, prescriptions, discounts, coupons, coupon usages, order number sequences, and order logs
-- `Models/Carts`: active/checked-out cart lifecycle, item snapshots, customization snapshots, prescription snapshots, and cart coupon previews
-- `Models/Wishlists`: customer wishlist and wishlist item entities
-- `DTOs/OrderCreationDtos`, `DTOs/OrderFetchDtos`, `DTOs/CartDtos`, `DTOs/WishlistDtos`: frontend-facing request/response contracts
+- `Application/Abstractions/Orders`: order creation/fetch, discounts, coupons, cart, and wishlist contracts.
+- `Infrastructure/Services/Orders`: orchestration and business logic for orders, pricing, coupons, carts, wishlists, payments, and logs.
+- `Models/Orders`: order snapshots, payments, discounts, coupons, coupon usages, order number sequences, and order journey logs.
+- `Models/Carts`: active/checked-out cart lifecycle, item snapshots, customization snapshots, prescription snapshots, and cart coupon previews.
+- `Models/Wishlists`: customer wishlist and wishlist item entities.
+
+## Main Modules
+
+### Authentication And Roles
+
+- JWT Bearer authentication is configured in `Program.cs`.
+- JWT tokens include the user id in `ClaimTypes.NameIdentifier` and the role in `ClaimTypes.Role`.
+- Role constants are `CUSTOMER`, `ADMIN`, and `SUPER_ADMIN`.
+- Customer-only APIs always read `UserId` from JWT. Frontend must not send `userId`.
+- Swagger UI exposes Bearer authentication through the `Authorize` button. Paste only the JWT token value.
+
+### Products And Customization
+
+- Product APIs expose full product data, including customization options, customization values, product images, and customization images.
+- `Products.HasPrescription = true` means prescription glasses are supported for that product. It does not make prescription mandatory.
+- Required customization options must be selected for order creation and cart item creation.
+- Product inventory uses `AvailableQuantity` and `SoldQuantity`.
+
+### Discounts And Coupons
+
+- Admin/Super Admin users manage discounts through `/api/admin/discounts`.
+- Admin/Super Admin users manage coupons through `/api/admin/coupons`.
+- Discounts can apply to all products or selected products.
+- Coupon code is the only customer-facing coupon input.
+- Backend validates coupon activity, date windows, minimum order amount, usage limits, per-user limits, and maximum coupon amount.
+- Frontend must never send or trust discount amounts or final totals.
+
+### Cart
+
+- Cart APIs are under `/api/cart` and require the `CUSTOMER` role.
+- One active cart per customer is enforced.
+- Cart item prices and coupon amounts are previews only.
+- `POST /api/cart/checkout` recalculates products, stock, discounts, coupon, payment amount, inventory, and order logs through the existing order creation flow.
+- Checked-out and abandoned carts cannot be modified.
+
+### Wishlist
+
+- Wishlist APIs are under `/api/wishlist` and require the `CUSTOMER` role.
+- Wishlist stores products only. It does not store quantity or historical price snapshots.
+- Moving a wishlist item to cart works only when the product can be added directly. Products requiring required customization or prescription selection should be configured on the product detail page first.
+
+### Orders, Payments, And Logs
+
+- `POST /api/orders/create` creates a full order in one transaction.
+- `POST /api/cart/checkout` creates an order from the active cart.
+- Payments are currently created through the order creation flow. There is a payment service, but no standalone payment controller is exposed.
+- Order logs are stored in `OrderStatusLogs` and visible to Admin/Super Admin through `GET /api/orders/{customerOrderId}/logs`.
+- Customer order detail hides sensitive/internal payment fields. Admin order detail includes the current payment model fields, but no confidential payment secrets are modeled.
+
+### Database And Migrations
+
+- EF Core migrations live in `backend/Migrations`.
+- `OrderNumberSequences` generates daily `CustomerOrderId` values in `YYMMDDXXXXX` format.
+- Cart/wishlist tables were added through `AddCartAndWishlist`.
+- Discount/coupon/order snapshot tables were added through `AddDiscountCouponsAndOrderSnapshots`.
+
+## Frontend API Usage Notes
+
+- Use `GET /api/products` to fetch product IDs, customization option IDs, customization value IDs, image URLs, stock, and prescription support.
+- Use `POST /api/cart/items` for cart building. Send product id, quantity, selected customization IDs, and optional prescription data only.
+- Use `POST /api/cart/apply-coupon` for cart coupon preview. Coupon usage is not recorded until checkout succeeds.
+- Use `POST /api/cart/checkout` to convert active cart into an order.
+- Use `POST /api/orders/create` only for direct checkout without cart.
+- Ignore frontend-calculated totals after every pricing response. The backend response is the source of truth.
+- For customer pages, never pass another user's id. Customer APIs scope data by JWT.
 
 ## Getting Started
 
@@ -124,7 +206,7 @@ JWT__ExpireMinutes=60
 Use a strong key with at least 32 characters.
 
 **Supabase connection tips:**
-- Go to your Supabase project → **Settings → Database → Connection String**
+- Go to your Supabase project -> **Settings -> Database -> Connection String**
 - If you're on an **IPv4 network**, use the **Session Pooler** connection (not direct)
 - The pooler host looks like: `aws-<region>.pooler.supabase.com`
 - The pooler username includes your project ref: `postgres.<project-ref>`
@@ -941,11 +1023,11 @@ Example:
 
 #### Middleware
 
-1. **CorrelationIdMiddleware** — Generates or reads `X-Correlation-ID` header to track requests
+1. **CorrelationIdMiddleware** - Generates or reads `X-Correlation-ID` header to track requests
    - All logs within a request share the same correlation ID
    - Correlation ID echoed in response headers
 
-2. **GlobalExceptionMiddleware** — Catches all unhandled exceptions and returns structured JSON error responses
+2. **GlobalExceptionMiddleware** - Catches all unhandled exceptions and returns structured JSON error responses
    - Maps exceptions to appropriate HTTP status codes (400, 409, 500)
    - Includes correlation ID in error response for log correlation
 
@@ -976,11 +1058,11 @@ Logging is configured in `appsettings.json` and `appsettings.Development.json`:
 
 ## Tech Stack
 
-- **.NET 10 / `net10.0`** — ASP.NET Core Web API (controller-based)
-- **Entity Framework Core 9 packages** — ORM with code-first migrations
-- **Npgsql** — PostgreSQL provider for EF Core
-- **Supabase** — Hosted PostgreSQL database
-- **Serilog 9.0.0** — Structured logging with Console and File sinks
-- **BCrypt.Net** — Password hashing
-- **DotNetEnv** — Environment variable management
-- **Swagger / OpenAPI** — API documentation
+- **.NET 10 / `net10.0`** - ASP.NET Core Web API (controller-based)
+- **Entity Framework Core 9 packages** - ORM with code-first migrations
+- **Npgsql** - PostgreSQL provider for EF Core
+- **Supabase** - Hosted PostgreSQL database
+- **Serilog 9.0.0** - Structured logging with Console and File sinks
+- **BCrypt.Net** - Password hashing
+- **DotNetEnv** - Environment variable management
+- **Swagger / OpenAPI** - API documentation

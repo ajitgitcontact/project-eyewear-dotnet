@@ -24,6 +24,9 @@ public class DiscountsController : ControllerBase
 
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<DiscountResponseDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetAll()
     {
         var discounts = await _discountService.GetAllAsync();
@@ -32,7 +35,10 @@ public class DiscountsController : ControllerBase
 
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(DiscountResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetById(string id)
     {
         return Ok(await _discountService.GetByIdAsync(id));
@@ -41,7 +47,10 @@ public class DiscountsController : ControllerBase
     [HttpPost]
     [ProducesResponseType(typeof(DiscountResponseDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Create([FromBody] CreateDiscountDto dto)
     {
         _logger.LogInformation("Admin discount create request received. AppliesTo={AppliesTo}", dto.AppliesTo);
@@ -52,7 +61,10 @@ public class DiscountsController : ControllerBase
     [HttpPut("{id}")]
     [ProducesResponseType(typeof(DiscountResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Update(string id, [FromBody] UpdateDiscountDto dto)
     {
         return Ok(await _discountService.UpdateAsync(id, dto));
@@ -60,7 +72,10 @@ public class DiscountsController : ControllerBase
 
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Delete(string id)
     {
         await _discountService.DeleteAsync(id);

@@ -42,6 +42,60 @@ builder.Services.AddOpenApi(options =>
     {
         var hasAuthorize = context.Description.ActionDescriptor.EndpointMetadata.OfType<AuthorizeAttribute>().Any();
         var hasAllowAnonymous = context.Description.ActionDescriptor.EndpointMetadata.OfType<AllowAnonymousAttribute>().Any();
+        var routeKey = $"{context.Description.HttpMethod?.ToUpperInvariant()} /{context.Description.RelativePath}";
+        var summaries = new Dictionary<string, string>
+        {
+            ["POST /api/Auth/signup"] = "Customer signup",
+            ["POST /api/users/login"] = "User login and JWT issue",
+            ["GET /api/products"] = "List products with nested customization and image data",
+            ["POST /api/products"] = "Create a full product with customizations and images",
+            ["POST /api/orders/create"] = "Create a complete checkout order",
+            ["GET /api/orders"] = "Admin order search",
+            ["GET /api/orders/{customerOrderId}"] = "Fetch complete order by CustomerOrderId",
+            ["GET /api/orders/{customerOrderId}/logs"] = "Fetch admin order journey logs",
+            ["GET /api/customer/orders"] = "List authenticated customer's orders",
+            ["GET /api/admin/discounts"] = "List admin discounts",
+            ["GET /api/admin/discounts/{id}"] = "Get admin discount by id",
+            ["POST /api/admin/discounts"] = "Create admin discount",
+            ["PUT /api/admin/discounts/{id}"] = "Update admin discount",
+            ["DELETE /api/admin/discounts/{id}"] = "Delete admin discount",
+            ["GET /api/admin/coupons"] = "List coupons",
+            ["GET /api/admin/coupons/{id}"] = "Get coupon by id",
+            ["POST /api/admin/coupons"] = "Create coupon",
+            ["PUT /api/admin/coupons/{id}"] = "Update coupon",
+            ["DELETE /api/admin/coupons/{id}"] = "Delete coupon",
+            ["GET /api/cart"] = "Get active customer cart",
+            ["POST /api/cart/items"] = "Add item to active cart",
+            ["PUT /api/cart/items/{cartItemId}"] = "Update cart item quantity",
+            ["DELETE /api/cart/items/{cartItemId}"] = "Remove cart item",
+            ["DELETE /api/cart/clear"] = "Clear active cart",
+            ["POST /api/cart/apply-coupon"] = "Apply coupon preview to cart",
+            ["DELETE /api/cart/remove-coupon"] = "Remove cart coupon preview",
+            ["POST /api/cart/checkout"] = "Checkout active cart into an order",
+            ["GET /api/wishlist"] = "Get customer wishlist",
+            ["POST /api/wishlist/items"] = "Add product to wishlist",
+            ["DELETE /api/wishlist/items/{wishlistItemId}"] = "Remove wishlist item",
+            ["POST /api/wishlist/items/{wishlistItemId}/move-to-cart"] = "Move wishlist item to cart"
+        };
+
+        if (summaries.TryGetValue(routeKey, out var summary))
+            operation.Summary = summary;
+
+        var authorizeRoles = context.Description.ActionDescriptor.EndpointMetadata
+            .OfType<AuthorizeAttribute>()
+            .Select(a => a.Roles)
+            .Where(r => !string.IsNullOrWhiteSpace(r))
+            .ToList();
+
+        if (hasAuthorize && !hasAllowAnonymous)
+        {
+            var roleDescription = authorizeRoles.Count > 0
+                ? $"Required roles: {string.Join(" or ", authorizeRoles)}."
+                : "Requires authenticated Bearer JWT.";
+            operation.Description = string.IsNullOrWhiteSpace(operation.Description)
+                ? roleDescription
+                : $"{operation.Description} {roleDescription}";
+        }
 
         if (hasAuthorize && !hasAllowAnonymous)
         {
