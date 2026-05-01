@@ -88,6 +88,9 @@ public class AppDbContext : DbContext
             entity.HasKey(o => o.OrdersId);
             entity.HasIndex(o => o.CustomerOrderId).IsUnique();
             entity.HasIndex(o => o.UserId);
+            entity.HasIndex(o => new { o.UserId, o.IdempotencyKey })
+                .IsUnique()
+                .HasFilter("\"IdempotencyKey\" IS NOT NULL");
 
             entity.Property(o => o.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(o => o.UpdatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
@@ -264,6 +267,7 @@ public class AppDbContext : DbContext
             entity.HasIndex(cu => cu.CouponId);
             entity.HasIndex(cu => cu.UserId);
             entity.HasIndex(cu => cu.CustomerOrderId);
+            entity.HasIndex(cu => new { cu.CouponId, cu.CustomerOrderId }).IsUnique();
             entity.Property(cu => cu.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(cu => cu.UpdatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
 

@@ -129,8 +129,8 @@ public class DataSeeder
             await _context.SaveChangesAsync();
 
             _logger.LogWarning(
-                "DEV ONLY: Seeded default SUPER_ADMIN. Email={Email} Password={Password} — Change before going to production!",
-                defaultEmail, defaultPassword);
+                "DEV ONLY: Seeded default SUPER_ADMIN. Email={Email}. Change the default password before using any shared environment.",
+                defaultEmail);
         }
         catch (Exception ex)
         {
@@ -139,3 +139,4 @@ public class DataSeeder
         }
     }
 }
+

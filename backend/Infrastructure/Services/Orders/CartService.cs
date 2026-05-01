@@ -185,10 +185,24 @@ public class CartService : ICartService
         return MapCart(cart);
     }
 
-    public async Task<OrderCreationResponseDto> CheckoutAsync(int userId, CartCheckoutRequestDto dto)
+    public async Task<OrderCreationResponseDto> CheckoutAsync(int userId, CartCheckoutRequestDto dto, string? idempotencyKey = null)
     {
         _logger.LogInformation("Cart checkout started. UserId={UserId}", userId);
-        var cart = await LoadActiveCartAsync(userId) ?? throw new BadRequestException("Cart is empty.");
+        var cart = await LoadActiveCartAsync(userId);
+        if (cart is null)
+        {
+            var existingOrder = !string.IsNullOrWhiteSpace(idempotencyKey)
+                ? await _orderCreationService.GetByIdempotencyKeyAsync(userId, idempotencyKey)
+                : null;
+
+            if (existingOrder is not null)
+            {
+                _logger.LogInformation("Cart checkout idempotency replay returned existing order. UserId={UserId}, CustomerOrderId={CustomerOrderId}", userId, existingOrder.CustomerOrderId);
+                return existingOrder;
+            }
+
+            throw new BadRequestException("Cart is empty.");
+        }
         EnsureActive(cart);
         var activeItems = cart.CartItems.Where(i => i.IsActive).ToList();
         if (activeItems.Count == 0)
@@ -240,7 +254,7 @@ public class CartService : ICartService
 
         try
         {
-            var order = await _orderCreationService.CreateAsync(userId, orderRequest, async customerOrderId =>
+            var order = await _orderCreationService.CreateAsync(userId, orderRequest, idempotencyKey, async customerOrderId =>
             {
                 await AddOrderLogAsync(customerOrderId, userId, "CART_CHECKOUT_STARTED", "Cart checkout started.");
                 await AddOrderLogAsync(customerOrderId, userId, "CART_PRODUCTS_VALIDATED", "Cart products validated.");

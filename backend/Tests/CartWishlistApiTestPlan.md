@@ -47,6 +47,10 @@ Use `backend.http` for runnable HTTP examples. Replace IDs and tokens with value
 |------|----------|
 | Checkout empty cart | `400` |
 | Checkout active cart | Creates order through `OrderCreationService` |
+| Checkout with new `Idempotency-Key` | Creates one order and stores key on the order |
+| Retry checkout with same `Idempotency-Key` after success | Returns the same order even if cart is already `CHECKED_OUT` |
+| Double-click checkout with same `Idempotency-Key` | Does not create duplicate orders |
+| Key longer than 100 chars | `400` |
 | Checkout recalculation | Backend recalculates product prices, discounts, coupon, inventory, payment, and order logs |
 | Successful checkout | Cart status becomes `CHECKED_OUT`, `CustomerOrderId` is stored, `CheckedOutAt` is set |
 | Add item after checkout | New active cart is created |

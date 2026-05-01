@@ -1511,6 +1511,31 @@ Requires Bearer JWT with one of these roles:
 
 The API ignores frontend identity fields. `UserId` is read from the JWT `NameIdentifier` claim. `CustomerOrderId`, totals, payment status, and order status are generated or calculated by backend code.
 
+### Checkout Idempotency
+
+`POST /api/orders/create` and `POST /api/cart/checkout` accept an optional `Idempotency-Key` header.
+
+Frontend usage:
+
+```http
+Idempotency-Key: 9fd7f94d-2f0f-4ae6-a0d6-9b8da5a8d51b
+```
+
+Rules:
+
+- Generate one new key per checkout attempt.
+- Reuse the same key for double-clicks, network retries, timeout retries, or page/app retry flows.
+- Do not reuse a key for a different cart/order.
+- Maximum length is `100` characters.
+- Keys are unique per authenticated `UserId`.
+
+Backend behavior:
+
+- `Orders.IdempotencyKey` stores the accepted key.
+- A filtered unique index on `Orders(UserId, IdempotencyKey)` prevents duplicate committed orders for the same customer/key.
+- If a retry uses the same key after the first request succeeded, the API returns the existing order response.
+- Cart checkout can replay the existing order even when the active cart was already marked `CHECKED_OUT`.
+
 ### Flow
 
 1. `OrderCreationController` receives the request and extracts the JWT user id.
@@ -1573,6 +1598,7 @@ Coupon behavior:
 - The backend validates existence, active state, optional start/end dates, minimum order amount, global usage limit, per-user usage limit, and maximum coupon amount for percentage coupons.
 - Invalid, inactive, expired, or over-limit coupons return `400`.
 - Coupon usage is written to `CouponUsages` only after successful order creation.
+- During final order creation, the coupon row is locked while usage counts are checked and `CouponUsages` is written. This serializes concurrent checkouts for the same coupon and prevents global or per-user usage limits from being exceeded by race conditions.
 
 Snapshot fields:
 

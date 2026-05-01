@@ -147,16 +147,18 @@ Current order-domain additions live in the same architecture:
 - `OrderNumberSequences` generates daily `CustomerOrderId` values in `YYMMDDXXXXX` format.
 - Cart/wishlist tables were added through `AddCartAndWishlist`.
 - Discount/coupon/order snapshot tables were added through `AddDiscountCouponsAndOrderSnapshots`.
+- Checkout idempotency and coupon usage guard indexes were added through `AddCheckoutIdempotencyAndCouponUsageGuards`.
 
 ## Frontend API Usage Notes
 
 - Use `GET /api/products` to fetch product IDs, customization option IDs, customization value IDs, image URLs, stock, and prescription support.
 - Use `POST /api/cart/items` for cart building. Send product id, quantity, selected customization IDs, and optional prescription data only.
 - Use `POST /api/cart/apply-coupon` for cart coupon preview. Coupon usage is not recorded until checkout succeeds.
-- Use `POST /api/cart/checkout` to convert active cart into an order.
-- Use `POST /api/orders/create` only for direct checkout without cart.
+- Use `POST /api/cart/checkout` to convert active cart into an order. Send an `Idempotency-Key` header for every checkout attempt.
+- Use `POST /api/orders/create` only for direct checkout without cart. Send an `Idempotency-Key` header for every checkout attempt.
 - Ignore frontend-calculated totals after every pricing response. The backend response is the source of truth.
 - For customer pages, never pass another user's id. Customer APIs scope data by JWT.
+- Generate one new idempotency key per checkout attempt, reuse the same key for retries, and never reuse it for a different cart/order.
 
 ## Getting Started
 
@@ -309,6 +311,14 @@ Allowed roles:
 - `SUPER_ADMIN`
 
 The frontend must not send `userId`. The backend reads the authenticated user id from the JWT `NameIdentifier` claim. Any frontend-provided `userId`, `customerOrderId`, `totalAmount`, item total, discount amount, `paymentStatus`, or `orderStatus` fields are not part of the request DTO and are ignored by model binding.
+
+Recommended header:
+
+```http
+Idempotency-Key: 9fd7f94d-2f0f-4ae6-a0d6-9b8da5a8d51b
+```
+
+The idempotency key makes retries and double-clicks safe. The frontend should generate one unique key, usually a UUID, when the customer starts a checkout submission. If the request times out, the user double-clicks, or the app retries after a network failure, send the same key again. For the same authenticated user, the backend returns the already-created order instead of creating a duplicate. Maximum length is `100` characters.
 
 #### Request Shape
 
@@ -474,6 +484,8 @@ The frontend must only send `couponCode`; it must not send or trust `originalSub
 
 Coupon validation checks active state, date window, minimum order amount, global usage limit, per-user usage limit, and maximum coupon amount for percentage coupons. Invalid/inactive/expired coupons fail with `400`.
 
+During final order creation, coupon validation and usage-limit checks run inside the order transaction. The coupon row is locked while usage counts are checked and `CouponUsages` is written, so concurrent checkouts cannot both pass the same final usage slot. Cart coupon application is only a preview; the coupon is always revalidated during checkout.
+
 Admin discount and coupon APIs:
 
 | Method | Endpoint | Roles | Purpose |
@@ -573,6 +585,8 @@ Example failure:
 
 Customer cart APIs require a `CUSTOMER` Bearer token. The frontend never sends `userId`; ownership is always taken from JWT. Cart totals are previews only and are recalculated again during checkout by the existing order creation flow.
 
+`POST /api/cart/checkout` also accepts the retry-safe `Idempotency-Key` header. If the original checkout succeeds but the frontend does not receive the response, retrying with the same key returns the same order even after the cart has already been marked `CHECKED_OUT`.
+
 | Method | Endpoint | Description |
 |---|---|---|
 | `GET` | `/api/cart` | Get the authenticated customer's active cart, or an empty cart |
@@ -649,6 +663,13 @@ Example cart response:
 ```
 
 Checkout request sends customer/address/payment data only; items and coupon come from the active cart:
+
+```http
+POST /api/cart/checkout
+Authorization: Bearer <customer-jwt>
+Idempotency-Key: 9fd7f94d-2f0f-4ae6-a0d6-9b8da5a8d51b
+Content-Type: application/json
+```
 
 ```json
 {

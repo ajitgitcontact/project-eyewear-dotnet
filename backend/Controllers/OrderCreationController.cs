@@ -28,6 +28,7 @@ public class OrderCreationController : ControllerBase
     /// </summary>
     /// <remarks>
     /// CustomerOrderId, UserId, item prices, totals, payment status, and order status are generated or calculated by the backend.
+    /// Send Idempotency-Key header for retry-safe checkout submissions. Reusing the same key for the same customer returns the existing order instead of creating a duplicate.
     /// Active admin discounts are applied automatically. Customers may pass CouponCode only; coupon amounts and final totals from the frontend are ignored.
     /// The response includes original subtotal, product discount total, coupon discount amount, and final payable amount snapshots.
     /// </remarks>
@@ -40,7 +41,9 @@ public class OrderCreationController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Create([FromBody] OrderCreationRequestDto? dto)
+    public async Task<IActionResult> Create(
+        [FromBody] OrderCreationRequestDto? dto,
+        [FromHeader(Name = "Idempotency-Key")] string? idempotencyKey)
     {
         _logger.LogInformation("Order creation request received.");
 
@@ -57,10 +60,23 @@ public class OrderCreationController : ControllerBase
             throw new UnauthorizedException("Invalid authentication token.");
         }
 
-        _logger.LogInformation("Order creation request authenticated. UserId={UserId}", userId);
-        var result = await _orderCreationService.CreateAsync(userId, dto);
+        idempotencyKey = NormalizeIdempotencyKey(idempotencyKey);
+        _logger.LogInformation("Order creation request authenticated. UserId={UserId}, IdempotencyKeyProvided={IdempotencyKeyProvided}", userId, idempotencyKey is not null);
+        var result = await _orderCreationService.CreateAsync(userId, dto, idempotencyKey);
         _logger.LogInformation("Order creation request completed. UserId={UserId}, CustomerOrderId={CustomerOrderId}", userId, result.CustomerOrderId);
 
         return Created($"/api/orders/{result.CustomerOrderId}", result);
+    }
+
+    private static string? NormalizeIdempotencyKey(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return null;
+
+        value = value.Trim();
+        if (value.Length > 100)
+            throw new BadRequestException("Idempotency-Key must be 100 characters or fewer.");
+
+        return value;
     }
 }

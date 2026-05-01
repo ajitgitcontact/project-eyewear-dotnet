@@ -86,6 +86,7 @@ public class OrderService : IOrderService
             OriginalSubtotal = dto.OriginalSubtotal,
             ProductDiscountTotal = dto.ProductDiscountTotal,
             CouponCode = dto.CouponCode,
+            IdempotencyKey = dto.IdempotencyKey,
             CouponDiscountAmount = dto.CouponDiscountAmount,
             FinalAmount = dto.FinalAmount,
             PaymentStatus = dto.PaymentStatus,
@@ -119,6 +120,7 @@ public class OrderService : IOrderService
         order.OriginalSubtotal = dto.OriginalSubtotal;
         order.ProductDiscountTotal = dto.ProductDiscountTotal;
         order.CouponCode = dto.CouponCode;
+        order.IdempotencyKey = dto.IdempotencyKey;
         order.CouponDiscountAmount = dto.CouponDiscountAmount;
         order.FinalAmount = dto.FinalAmount;
         order.PaymentStatus = dto.PaymentStatus;
@@ -159,6 +161,7 @@ public class OrderService : IOrderService
             OriginalSubtotal = order.OriginalSubtotal,
             ProductDiscountTotal = order.ProductDiscountTotal,
             CouponCode = order.CouponCode,
+            IdempotencyKey = order.IdempotencyKey,
             CouponDiscountAmount = order.CouponDiscountAmount,
             FinalAmount = order.FinalAmount,
             PaymentStatus = order.PaymentStatus,

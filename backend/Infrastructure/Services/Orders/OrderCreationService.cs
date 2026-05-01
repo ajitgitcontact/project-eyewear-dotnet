@@ -12,6 +12,7 @@ using backend.DTOs.PaymentDtos;
 using backend.Models.Orders;
 using backend.Models.Products;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace backend.Infrastructure.Services.Orders;
 
@@ -58,14 +59,26 @@ public class OrderCreationService : IOrderCreationService
         _logger = logger;
     }
 
-    public async Task<OrderCreationResponseDto> CreateAsync(int userId, OrderCreationRequestDto dto, Func<string, Task>? beforeCommitAsync = null)
+    public async Task<OrderCreationResponseDto> CreateAsync(int userId, OrderCreationRequestDto dto, string? idempotencyKey = null, Func<string, Task>? beforeCommitAsync = null)
     {
         var currentStep = "start";
+        var currentStepDetail = "Order creation request accepted by service.";
         string? customerOrderId = null;
         if (dto is null)
             throw new BadRequestException("Request body is required.");
 
-        _logger.LogInformation("Order creation started. UserId={UserId}, ItemCount={ItemCount}", userId, dto.Items?.Count ?? 0);
+        idempotencyKey = NormalizeIdempotencyKey(idempotencyKey);
+        if (idempotencyKey is not null)
+        {
+            var existing = await GetByIdempotencyKeyAsync(userId, idempotencyKey);
+            if (existing is not null)
+            {
+                _logger.LogInformation("Order creation idempotency replay. UserId={UserId}, CustomerOrderId={CustomerOrderId}", userId, existing.CustomerOrderId);
+                return existing;
+            }
+        }
+
+        _logger.LogInformation("Order creation started. UserId={UserId}, ItemCount={ItemCount}, IdempotencyKeyProvided={IdempotencyKeyProvided}", userId, dto.Items?.Count ?? 0, idempotencyKey is not null);
 
         await using var transaction = await _context.Database.BeginTransactionAsync();
         _logger.LogInformation("Order creation transaction started. UserId={UserId}", userId);
@@ -73,20 +86,24 @@ public class OrderCreationService : IOrderCreationService
         try
         {
             currentStep = "validation";
+            currentStepDetail = $"Validating payload. ItemCount={dto.Items?.Count ?? 0}, CouponProvided={!string.IsNullOrWhiteSpace(dto.CouponCode ?? dto.DiscountCode)}";
             _logger.LogInformation("Product validation started. UserId={UserId}", userId);
             await _validator.ValidateAsync(userId, dto);
             _logger.LogInformation("Product validation completed. UserId={UserId}", userId);
 
             currentStep = "customer_order_id_generation";
+            currentStepDetail = "Generating backend CustomerOrderId.";
             customerOrderId = await _customerOrderIdGenerator.GenerateAsync();
             _logger.LogInformation("CustomerOrderId generated for order creation. UserId={UserId}, CustomerOrderId={CustomerOrderId}", userId, customerOrderId);
 
             currentStep = "totals_calculation";
+            currentStepDetail = "Preparing product, customization, and line-total snapshots.";
             var preparedItems = await PrepareItemsAsync(dto);
             var subtotal = preparedItems.Sum(i => i.TotalPrice);
             _logger.LogInformation("Order totals calculated. UserId={UserId}, CustomerOrderId={CustomerOrderId}, Subtotal={Subtotal}", userId, customerOrderId, subtotal);
 
             currentStep = "discount_application";
+            currentStepDetail = $"Applying admin discounts and coupon. CouponProvided={!string.IsNullOrWhiteSpace(dto.CouponCode ?? dto.DiscountCode)}";
             var discount = await _discountService.ApplyDiscountAsync(new DiscountCalculationContext
             {
                 UserId = userId,
@@ -111,6 +128,7 @@ public class OrderCreationService : IOrderCreationService
                 discount.FinalAmount);
 
             currentStep = "order_creation";
+            currentStepDetail = "Creating Orders row with backend-calculated totals and statuses.";
             var order = await _orderService.CreateAsync(new CreateOrderDto
             {
                 CustomerOrderId = customerOrderId,
@@ -122,6 +140,7 @@ public class OrderCreationService : IOrderCreationService
                 OriginalSubtotal = discount.OriginalSubtotal,
                 ProductDiscountTotal = discount.ProductDiscountTotal,
                 CouponCode = discount.CouponCode,
+                IdempotencyKey = idempotencyKey,
                 CouponDiscountAmount = discount.CouponDiscountAmount,
                 FinalAmount = discount.FinalAmount,
                 PaymentStatus = PaymentStatus.PENDING,
@@ -139,9 +158,12 @@ public class OrderCreationService : IOrderCreationService
             await AddJourneyLogAsync(customerOrderId, OrderStatus.CREATED, PaymentStatus.PENDING, "ORDER_CREATED", "Order record created.", userId);
 
             currentStep = "items_creation";
+            currentStepDetail = $"Creating order items. ItemCount={preparedItems.Count}";
             var createdItems = new List<OrderCreationItemResponseDto>();
             foreach (var preparedItem in preparedItems.Select((value, index) => new { value, index }))
             {
+                currentStep = "items_creation";
+                currentStepDetail = $"Creating order item. LineNumber={preparedItem.index}, ProductId={preparedItem.value.Product.ProductId}, Quantity={preparedItem.value.Request.Quantity}";
                 var itemDiscount = discount.Items.First(i => i.LineNumber == preparedItem.index);
                 var item = await _orderItemService.CreateAsync(new CreateOrderItemDto
                 {
@@ -159,9 +181,11 @@ public class OrderCreationService : IOrderCreationService
                 _logger.LogInformation("Order item created. CustomerOrderId={CustomerOrderId}, OrderItemId={OrderItemId}, ProductId={ProductId}", customerOrderId, item.OrderItemsId, item.ProductId);
 
                 currentStep = "customizations_creation";
+                currentStepDetail = $"Creating item customizations. LineNumber={preparedItem.index}, ProductId={preparedItem.value.Product.ProductId}, OrderItemId={item.OrderItemsId}, CustomizationCount={preparedItem.value.Customizations.Count}";
                 var customizations = new List<OrderItemCustomizationResponseDto>();
                 foreach (var customization in preparedItem.value.Customizations)
                 {
+                    currentStepDetail = $"Creating item customization. LineNumber={preparedItem.index}, ProductId={preparedItem.value.Product.ProductId}, OrderItemId={item.OrderItemsId}, CustomizationOptionId={customization.CustomizationOptionId}, CustomizationValueId={customization.CustomizationValueId}";
                     var createdCustomization = await _orderItemCustomizationService.CreateAsync(new CreateOrderItemCustomizationDto
                     {
                         OrderItemId = item.OrderItemsId,
@@ -183,6 +207,7 @@ public class OrderCreationService : IOrderCreationService
             await AddJourneyLogAsync(customerOrderId, OrderStatus.CREATED, PaymentStatus.PENDING, "ORDER_ITEMS_CREATED", "Order items created.", userId);
 
             currentStep = "address_creation";
+            currentStepDetail = "Creating order address row.";
             var address = await _orderAddressService.CreateAsync(new CreateOrderAddressDto
             {
                 CustomerOrderId = customerOrderId,
@@ -197,6 +222,9 @@ public class OrderCreationService : IOrderCreationService
             _logger.LogInformation("Order address created. CustomerOrderId={CustomerOrderId}, OrderAddressesId={OrderAddressesId}", customerOrderId, address.OrderAddressesId);
 
             currentStep = "prescription_creation";
+            currentStepDetail = dto.Prescription is null
+                ? "Skipping prescription creation because no prescription was provided."
+                : "Creating optional prescription snapshot.";
             var prescription = dto.Prescription is null
                 ? null
                 : await _customerPrescriptionService.CreateAsync(new CreateCustomerPrescriptionDto
@@ -217,6 +245,9 @@ public class OrderCreationService : IOrderCreationService
             _logger.LogInformation("Order prescription step completed. CustomerOrderId={CustomerOrderId}, Created={Created}", customerOrderId, prescription is not null);
 
             currentStep = "coupon_usage_creation";
+            currentStepDetail = string.IsNullOrWhiteSpace(discount.CouponId)
+                ? "Skipping coupon usage because no coupon discount was applied."
+                : $"Recording coupon usage. CouponId={discount.CouponId}, CouponCode={discount.CouponCode}";
             if (!string.IsNullOrWhiteSpace(discount.CouponId) && !string.IsNullOrWhiteSpace(discount.CouponCode) && discount.CouponDiscountAmount > 0)
             {
                 await _discountService.RecordCouponUsageAsync(discount.CouponId, userId, customerOrderId, discount.CouponCode, discount.CouponDiscountAmount);
@@ -224,6 +255,7 @@ public class OrderCreationService : IOrderCreationService
             }
 
             currentStep = "payment_creation";
+            currentStepDetail = $"Creating payment row. Method={dto.Payment.Method}, Amount={discount.FinalAmount}";
             var payment = await _paymentService.CreateAsync(new CreatePaymentDto
             {
                 CustomerOrderId = customerOrderId,
@@ -236,10 +268,12 @@ public class OrderCreationService : IOrderCreationService
             await AddJourneyLogAsync(customerOrderId, OrderStatus.CREATED, PaymentStatus.PENDING, "PAYMENT_CREATED", "Payment row created.", userId);
 
             currentStep = "status_log_creation";
+            currentStepDetail = "Creating final order confirmed journey log.";
             var statusLog = await AddJourneyLogAsync(customerOrderId, OrderStatus.CREATED, PaymentStatus.PENDING, "ORDER_CONFIRMED", "Order confirmed.", userId);
             _logger.LogInformation("Order status log created. CustomerOrderId={CustomerOrderId}, OrderStatusLogsId={OrderStatusLogsId}", customerOrderId, statusLog.OrderStatusLogsId);
 
             currentStep = "inventory_update";
+            currentStepDetail = $"Updating inventory atomically. DistinctProductCount={preparedItems.Select(i => i.Product.ProductId).Distinct().Count()}";
             await UpdateInventoryAsync(preparedItems);
             _logger.LogInformation("Inventory updated for order. CustomerOrderId={CustomerOrderId}, ItemCount={ItemCount}", customerOrderId, preparedItems.Count);
             await AddJourneyLogAsync(customerOrderId, OrderStatus.CREATED, PaymentStatus.PENDING, "STOCK_UPDATED", "Stock updated.", userId);
@@ -247,10 +281,12 @@ public class OrderCreationService : IOrderCreationService
             if (beforeCommitAsync is not null)
             {
                 currentStep = "before_commit_callback";
+                currentStepDetail = "Running checkout caller callback before transaction commit.";
                 await beforeCommitAsync(customerOrderId);
             }
 
             currentStep = "transaction_commit";
+            currentStepDetail = "Committing order creation transaction.";
             await transaction.CommitAsync();
             _logger.LogInformation("Order creation transaction committed. UserId={UserId}, CustomerOrderId={CustomerOrderId}", userId, customerOrderId);
 
@@ -277,10 +313,123 @@ public class OrderCreationService : IOrderCreationService
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
-            _logger.LogError(ex, "Order creation failed and transaction rolled back. UserId={UserId}, Step={Step}", userId, currentStep);
+            var failure = GetFailureDetails(ex);
+            try
+            {
+                await transaction.RollbackAsync();
+                LogOrderCreationFailure(ex, failure, userId, customerOrderId, currentStep, currentStepDetail, dto, idempotencyKey, rollbackSucceeded: true);
+            }
+            catch (Exception rollbackException)
+            {
+                _logger.LogError(
+                    rollbackException,
+                    "Order creation rollback failed. UserId={UserId}, CustomerOrderId={CustomerOrderId}, FailedStep={FailedStep}, OriginalFailureReason={FailureReason}",
+                    userId,
+                    customerOrderId,
+                    currentStep,
+                    failure.Reason);
+
+                LogOrderCreationFailure(ex, failure, userId, customerOrderId, currentStep, currentStepDetail, dto, idempotencyKey, rollbackSucceeded: false);
+            }
+
+            if (idempotencyKey is not null && IsUniqueViolation(ex))
+            {
+                var existing = await GetByIdempotencyKeyAsync(userId, idempotencyKey);
+                if (existing is not null)
+                {
+                    _logger.LogInformation("Order creation unique idempotency conflict returned existing order. UserId={UserId}, CustomerOrderId={CustomerOrderId}", userId, existing.CustomerOrderId);
+                    return existing;
+                }
+            }
+
             throw;
         }
+    }
+
+    private void LogOrderCreationFailure(
+        Exception exception,
+        OrderCreationFailureDetails failure,
+        int userId,
+        string? customerOrderId,
+        string step,
+        string stepDetail,
+        OrderCreationRequestDto dto,
+        string? idempotencyKey,
+        bool rollbackSucceeded)
+    {
+        var logLevel = failure.IsExpectedBusinessFailure ? LogLevel.Warning : LogLevel.Error;
+        _logger.Log(
+            logLevel,
+            exception,
+            "Order creation failed. UserId={UserId}, CustomerOrderId={CustomerOrderId}, FailedStep={FailedStep}, StepDetail={StepDetail}, FailureCategory={FailureCategory}, FailureReason={FailureReason}, ExceptionType={ExceptionType}, HttpStatus={HttpStatus}, DbSqlState={DbSqlState}, DbConstraint={DbConstraint}, RollbackSucceeded={RollbackSucceeded}, IdempotencyKeyProvided={IdempotencyKeyProvided}, ItemCount={ItemCount}, CouponProvided={CouponProvided}",
+            userId,
+            customerOrderId,
+            step,
+            stepDetail,
+            failure.Category,
+            failure.Reason,
+            failure.ExceptionType,
+            failure.HttpStatus,
+            failure.DbSqlState,
+            failure.DbConstraint,
+            rollbackSucceeded,
+            idempotencyKey is not null,
+            dto.Items?.Count ?? 0,
+            !string.IsNullOrWhiteSpace(dto.CouponCode ?? dto.DiscountCode));
+    }
+
+    public async Task<OrderCreationResponseDto?> GetByIdempotencyKeyAsync(int userId, string idempotencyKey)
+    {
+        idempotencyKey = NormalizeIdempotencyKey(idempotencyKey) ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(idempotencyKey))
+            return null;
+
+        var order = await _context.Orders
+            .AsNoTracking()
+            .FirstOrDefaultAsync(o => o.UserId == userId && o.IdempotencyKey == idempotencyKey);
+
+        if (order is null)
+            return null;
+
+        return await BuildExistingResponseAsync(order.CustomerOrderId);
+    }
+
+    private async Task<OrderCreationResponseDto> BuildExistingResponseAsync(string existingCustomerOrderId)
+    {
+        var order = await _orderService.GetByCustomerOrderIdAsync(existingCustomerOrderId);
+        var addresses = (await _orderAddressService.GetByCustomerOrderIdAsync(existingCustomerOrderId)).ToList();
+        var items = (await _orderItemService.GetByCustomerOrderIdAsync(existingCustomerOrderId)).ToList();
+        var prescriptions = (await _customerPrescriptionService.GetByCustomerOrderIdAsync(existingCustomerOrderId)).ToList();
+        var payments = (await _paymentService.GetByCustomerOrderIdAsync(existingCustomerOrderId)).ToList();
+        var statusLogs = (await _orderStatusLogService.GetByCustomerOrderIdAsync(existingCustomerOrderId)).ToList();
+
+        var itemResponses = new List<OrderCreationItemResponseDto>();
+        foreach (var item in items)
+        {
+            itemResponses.Add(new OrderCreationItemResponseDto
+            {
+                Item = item,
+                Customizations = (await _orderItemCustomizationService.GetByOrderItemIdAsync(item.OrderItemsId)).ToList()
+            });
+        }
+
+        return new OrderCreationResponseDto
+        {
+            CustomerOrderId = order.CustomerOrderId,
+            Subtotal = order.OriginalSubtotal,
+            OriginalSubtotal = order.OriginalSubtotal,
+            ProductDiscountTotal = order.ProductDiscountTotal,
+            CouponCode = order.CouponCode,
+            CouponDiscountAmount = order.CouponDiscountAmount,
+            DiscountAmount = order.ProductDiscountTotal + order.CouponDiscountAmount,
+            FinalAmount = order.FinalAmount,
+            Order = order,
+            Address = addresses.FirstOrDefault() ?? new OrderAddressResponseDto(),
+            Items = itemResponses,
+            Prescription = prescriptions.FirstOrDefault(),
+            Payment = payments.FirstOrDefault() ?? new PaymentResponseDto(),
+            StatusLog = statusLogs.OrderBy(l => l.CreatedAt).LastOrDefault() ?? new OrderStatusLogResponseDto()
+        };
     }
 
     private async Task<List<PreparedOrderItem>> PrepareItemsAsync(OrderCreationRequestDto dto)
@@ -354,6 +503,111 @@ public class OrderCreationService : IOrderCreationService
             throw new BadRequestException("Invalid final order amount.");
     }
 
+    private static string? NormalizeIdempotencyKey(string? idempotencyKey)
+    {
+        if (string.IsNullOrWhiteSpace(idempotencyKey))
+            return null;
+
+        idempotencyKey = idempotencyKey.Trim();
+        if (idempotencyKey.Length > 100)
+            throw new BadRequestException("Idempotency-Key must be 100 characters or fewer.");
+
+        return idempotencyKey;
+    }
+
+    private static bool IsUniqueViolation(Exception ex)
+    {
+        if (ex is PostgresException postgresException)
+            return postgresException.SqlState == PostgresErrorCodes.UniqueViolation;
+
+        return ex.InnerException is not null && IsUniqueViolation(ex.InnerException);
+    }
+
+    private static OrderCreationFailureDetails GetFailureDetails(Exception ex)
+    {
+        var postgresException = FindPostgresException(ex);
+
+        return ex switch
+        {
+            BadRequestException badRequest => new OrderCreationFailureDetails(
+                Category: "BadRequest",
+                Reason: badRequest.Message,
+                ExceptionType: ex.GetType().Name,
+                HttpStatus: StatusCodes.Status400BadRequest,
+                DbSqlState: postgresException?.SqlState,
+                DbConstraint: postgresException?.ConstraintName,
+                IsExpectedBusinessFailure: true),
+
+            NotFoundException notFound => new OrderCreationFailureDetails(
+                Category: "NotFound",
+                Reason: notFound.Message,
+                ExceptionType: ex.GetType().Name,
+                HttpStatus: StatusCodes.Status404NotFound,
+                DbSqlState: postgresException?.SqlState,
+                DbConstraint: postgresException?.ConstraintName,
+                IsExpectedBusinessFailure: true),
+
+            ConflictException conflict => new OrderCreationFailureDetails(
+                Category: "Conflict",
+                Reason: conflict.Message,
+                ExceptionType: ex.GetType().Name,
+                HttpStatus: StatusCodes.Status409Conflict,
+                DbSqlState: postgresException?.SqlState,
+                DbConstraint: postgresException?.ConstraintName,
+                IsExpectedBusinessFailure: true),
+
+            DbUpdateException => new OrderCreationFailureDetails(
+                Category: postgresException is null ? "DatabaseUpdate" : "DatabaseUpdatePostgres",
+                Reason: GetDatabaseFailureReason(postgresException),
+                ExceptionType: ex.GetType().Name,
+                HttpStatus: StatusCodes.Status500InternalServerError,
+                DbSqlState: postgresException?.SqlState,
+                DbConstraint: postgresException?.ConstraintName,
+                IsExpectedBusinessFailure: false),
+
+            InvalidOperationException invalidOperation => new OrderCreationFailureDetails(
+                Category: "InvalidOperation",
+                Reason: invalidOperation.Message,
+                ExceptionType: ex.GetType().Name,
+                HttpStatus: StatusCodes.Status409Conflict,
+                DbSqlState: postgresException?.SqlState,
+                DbConstraint: postgresException?.ConstraintName,
+                IsExpectedBusinessFailure: false),
+
+            _ => new OrderCreationFailureDetails(
+                Category: "Unexpected",
+                Reason: ex.Message,
+                ExceptionType: ex.GetType().Name,
+                HttpStatus: StatusCodes.Status500InternalServerError,
+                DbSqlState: postgresException?.SqlState,
+                DbConstraint: postgresException?.ConstraintName,
+                IsExpectedBusinessFailure: false)
+        };
+    }
+
+    private static string GetDatabaseFailureReason(PostgresException? postgresException)
+    {
+        if (postgresException is null)
+            return "Database update failed while saving order data.";
+
+        return postgresException.SqlState switch
+        {
+            PostgresErrorCodes.UniqueViolation => $"Duplicate value violated unique constraint {postgresException.ConstraintName}.",
+            PostgresErrorCodes.ForeignKeyViolation => $"Related database row was missing for foreign key constraint {postgresException.ConstraintName}.",
+            PostgresErrorCodes.NotNullViolation => $"Required database column was null for constraint {postgresException.ConstraintName}.",
+            PostgresErrorCodes.CheckViolation => $"Database check constraint {postgresException.ConstraintName} failed.",
+            _ => $"PostgreSQL error {postgresException.SqlState} while saving order data."
+        };
+    }
+
+    private static PostgresException? FindPostgresException(Exception ex)
+    {
+        if (ex is PostgresException postgresException)
+            return postgresException;
+
+        return ex.InnerException is null ? null : FindPostgresException(ex.InnerException);
+    }
+
     private async Task<OrderStatusLogResponseDto> AddJourneyLogAsync(
         string customerOrderId,
         OrderStatus orderStatus,
@@ -413,4 +667,13 @@ public class OrderCreationService : IOrderCreationService
         public string Value { get; set; } = string.Empty;
         public decimal AdditionalPrice { get; set; }
     }
+
+    private sealed record OrderCreationFailureDetails(
+        string Category,
+        string Reason,
+        string ExceptionType,
+        int HttpStatus,
+        string? DbSqlState,
+        string? DbConstraint,
+        bool IsExpectedBusinessFailure);
 }

@@ -88,8 +88,13 @@ public class DiscountService : IDiscountService
             try
             {
                 var coupon = await _context.Coupons
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(c => c.CouponCode == normalizedCouponCode);
+                    .FromSqlInterpolated($"""
+                        SELECT *
+                        FROM "Coupons"
+                        WHERE "CouponCode" = {normalizedCouponCode}
+                        FOR UPDATE
+                        """)
+                    .FirstOrDefaultAsync();
 
                 if (coupon is null)
                     throw new BadRequestException("Invalid coupon code.");

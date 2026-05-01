@@ -14,6 +14,7 @@ public class OrderResponseDto
     public decimal OriginalSubtotal { get; set; }
     public decimal ProductDiscountTotal { get; set; }
     public string? CouponCode { get; set; }
+    public string? IdempotencyKey { get; set; }
     public decimal CouponDiscountAmount { get; set; }
     public decimal FinalAmount { get; set; }
     public PaymentStatus PaymentStatus { get; set; }

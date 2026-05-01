@@ -60,6 +60,17 @@ Use `OrderCreationApiTests.http` for runnable HTTP scenarios. The cases below ar
 | Frontend payment `status` | Ignored; payment starts `INITIATED` |
 | Sensitive payment fields | Not accepted by DTO and should not appear in logs |
 
+## Idempotency
+
+| Case | Expected |
+|------|----------|
+| First request with a new `Idempotency-Key` | Creates one order and stores the key on `Orders.IdempotencyKey` |
+| Retry same payload with same key and same JWT user | Returns the same existing `customerOrderId`; no duplicate order/items/payment/coupon usage rows |
+| Double-click sends two concurrent requests with same key | At most one order is committed; the duplicate request returns the existing order or is blocked by the unique index and replayed |
+| Same key reused by different user | Allowed independently because uniqueness is scoped by `UserId` |
+| Key longer than 100 chars | `400` |
+| Same key reused for a different checkout by same user | Returns the first order; frontend must generate a fresh key per checkout attempt |
+
 ## Transaction
 
 Verify through database queries after forced failures:
@@ -87,6 +98,7 @@ Verify through database queries after forced failures:
 | Minimum order not satisfied | `400` |
 | Global usage limit reached | `400` |
 | Per-user usage limit reached | `400` |
+| Concurrent requests for final remaining coupon usage | Only one checkout succeeds; the other sees the updated usage count and fails cleanly |
 | Percentage coupon with maximum amount | Coupon discount is capped |
 | Discount greater than subtotal | Guard exists in `OrderCreationService.ValidateDiscountResult` |
 | Frontend sends totals | Ignored; backend recalculates snapshots |

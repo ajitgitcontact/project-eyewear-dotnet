@@ -139,6 +139,9 @@ public class CartController : ControllerBase
     /// <summary>
     /// Converts the active cart into an order using the existing backend-only order creation calculation flow.
     /// </summary>
+    /// <remarks>
+    /// Send Idempotency-Key header for retry-safe checkout submissions. Reusing the same key for the same customer returns the existing order instead of creating a duplicate.
+    /// </remarks>
     [HttpPost("checkout")]
     [ProducesResponseType(typeof(OrderCreationResponseDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -147,11 +150,25 @@ public class CartController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Checkout([FromBody] CartCheckoutRequestDto dto)
+    public async Task<IActionResult> Checkout(
+        [FromBody] CartCheckoutRequestDto dto,
+        [FromHeader(Name = "Idempotency-Key")] string? idempotencyKey)
     {
         var userId = GetAuthenticatedUserId();
-        var result = await _cartService.CheckoutAsync(userId, dto);
+        var result = await _cartService.CheckoutAsync(userId, dto, NormalizeIdempotencyKey(idempotencyKey));
         return Created($"/api/orders/{result.CustomerOrderId}", result);
+    }
+
+    private static string? NormalizeIdempotencyKey(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return null;
+
+        value = value.Trim();
+        if (value.Length > 100)
+            throw new BadRequestException("Idempotency-Key must be 100 characters or fewer.");
+
+        return value;
     }
 
     private int GetAuthenticatedUserId()

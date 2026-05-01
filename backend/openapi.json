@@ -6,7 +6,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:5083/"
+      "url": "http://localhost:5085/"
     }
   ],
   "paths": {
@@ -602,6 +602,15 @@
         ],
         "summary": "Checkout active cart into an order",
         "description": "Required roles: CUSTOMER.",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1602,6 +1611,15 @@
         ],
         "summary": "Create a complete checkout order",
         "description": "Required roles: CUSTOMER,ADMIN,SUPER_ADMIN.",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -5404,6 +5422,10 @@
             "format": "double"
           },
           "couponCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "idempotencyKey": {
             "type": "string",
             "nullable": true
           },

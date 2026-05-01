@@ -43,6 +43,9 @@ public class Order
     [MaxLength(100)]
     public string? CouponCode { get; set; }
 
+    [MaxLength(100)]
+    public string? IdempotencyKey { get; set; }
+
     [Column(TypeName = "numeric(10,2)")]
     public decimal CouponDiscountAmount { get; set; }
 

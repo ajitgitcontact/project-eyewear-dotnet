@@ -3,6 +3,7 @@
 @customerPassword = Customer@12345
 @adminEmail = admin1@eyewear.dev
 @adminPassword = Admin@12345
+@checkoutIdempotencyKey = {{$guid}}
 
 # ------------------------------
 # AUTH API
@@ -112,6 +113,7 @@ Accept: application/json
 # Replace product/customization IDs with values from GET /api/products.
 POST {{backend_HostAddress}}/api/orders/create
 Authorization: Bearer {{customerToken}}
+Idempotency-Key: {{checkoutIdempotencyKey}}
 Content-Type: application/json
 
 {
@@ -320,6 +322,7 @@ Accept: application/json
 # Customer: checkout active cart through existing order creation flow.
 POST {{backend_HostAddress}}/api/cart/checkout
 Authorization: Bearer {{customerToken}}
+Idempotency-Key: {{checkoutIdempotencyKey}}
 Content-Type: application/json
 
 {

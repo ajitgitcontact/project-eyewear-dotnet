@@ -36,6 +36,9 @@ public class CreateOrderDto
     [MaxLength(100)]
     public string? CouponCode { get; set; }
 
+    [MaxLength(100)]
+    public string? IdempotencyKey { get; set; }
+
     [Range(0, double.MaxValue)]
     public decimal CouponDiscountAmount { get; set; }
 

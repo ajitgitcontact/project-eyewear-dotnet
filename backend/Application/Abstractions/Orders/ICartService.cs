@@ -12,5 +12,5 @@ public interface ICartService
     Task<CartResponseDto> ClearAsync(int userId);
     Task<CartResponseDto> ApplyCouponAsync(int userId, ApplyCartCouponDto dto);
     Task<CartResponseDto> RemoveCouponAsync(int userId);
-    Task<OrderCreationResponseDto> CheckoutAsync(int userId, CartCheckoutRequestDto dto);
+    Task<OrderCreationResponseDto> CheckoutAsync(int userId, CartCheckoutRequestDto dto, string? idempotencyKey = null);
 }
