@@ -2,6 +2,14 @@ import { LoginRequest, LoginResponse } from "@/lib/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5047/api";
 
+export interface SignUpRequest {
+  firstName: string;
+  lastName: string;
+  email: string;
+  contactNumber?: string;
+  password: string;
+}
+
 export class AuthClient {
   static async login(credentials: LoginRequest): Promise<LoginResponse> {
     try {
@@ -31,6 +39,21 @@ export class AuthClient {
     } catch (err) {
       console.error("🔥 Fetch error:", err);
       throw err;
+    }
+  }
+
+  static async signUp(data: SignUpRequest): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/Auth/signup`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: `HTTP ${response.status}` }));
+      throw new Error(error.message || "Signup failed");
     }
   }
 

@@ -1,98 +1,119 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { useRouter } from "next/navigation";
+import { useWishlist } from "@/context/WishlistContext";
+import { usePathname } from "next/navigation";
 import styles from "@/styles/header.module.css";
 
-const categories = [
-  { name: "New", subcategories: ["Latest Arrivals", "Trending", "Hot Deals"] },
-  { name: "In", subcategories: ["Featured", "Popular", "Best Sellers"] },
-  { name: "Sunglasses", subcategories: ["UV Protection", "Polarized", "Designer", "Sports"] },
-  { name: "Anti Blue Lens", subcategories: ["Gaming", "Office Work", "All Day Wear"] },
-  { name: "Clearance", subcategories: ["Up to 50% Off", "Last Chance", "Overstock"] },
-  { name: "Coming Soon", subcategories: ["Summer Collection", "Designer Brands", "New Tech"] },
-  { name: "Accessories", subcategories: ["Cases", "Cleaning Kits", "Straps", "Lens Wipes"] },
+const primaryLinks = [
+  { name: "Sunglasses", href: "/" },
+  { name: "Anti Blue Lens", href: "/" },
+  { name: "Clearance", href: "/" },
+  { name: "Coming Soon", href: "/" },
+  { name: "Accessories", href: "/" },
 ];
 
+const secondaryLinks = ["Transition Lenses", "Apparel", "Virtual Try On"];
+
 export default function Header() {
-  const { user, logout } = useAuth();
-  const router = useRouter();
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
-
-  const handleLogout = () => {
-    logout();
-    router.push("/login");
-  };
-
-  if (!user) {
-    return null; // Don't show header if not logged in
-  }
+  const { user } = useAuth();
+  const { count } = useWishlist();
+  const pathname = usePathname();
+  const [currency, setCurrency] = useState("USD");
 
   return (
     <header className={styles.header}>
-      <div className={styles.container}>
-        {/* Logo */}
-        <div className={styles.logo}>
-          <h1>Eyewear Store</h1>
+      <div className={styles.utilityBar}>
+        <div className={styles.utilityInner}>
+          <div className={styles.utilityLinks}>
+            <span>B2B</span>
+            <span>Our Stores</span>
+          </div>
+          <div className={styles.utilityCenter}>Virtual Try On</div>
+          <div className={styles.utilityLinks}>
+            <span>Reviews</span>
+            <span>Worldwide Shipping</span>
+          </div>
+        </div>
+      </div>
+
+      <div className={styles.mainBar}>
+        <div className={styles.brandBlock}>
+          <Link href="/" className={styles.brandMark}>
+              <span className={styles.brandName}>Eyewear Co.</span>
+          </Link>
         </div>
 
-        {/* Navigation */}
-        <nav className={styles.nav}>
-          {categories.map((category) => (
-            <div
-              key={category.name}
-              className={styles.navItem}
-              onMouseEnter={() => setActiveCategory(category.name)}
-              onMouseLeave={() => setActiveCategory(null)}
+        <nav className={styles.nav} aria-label="Primary">
+          {primaryLinks.map((link) => (
+            <Link
+              key={link.name}
+              href={link.href}
+              className={`${styles.navLink} ${pathname === link.href ? styles.navLinkActive : ""}`}
             >
-              <button className={styles.navButton}>
-                {category.name}
-              </button>
-              
-              {/* Dropdown Menu */}
-              {activeCategory === category.name && (
-                <div className={styles.dropdown}>
-                  {category.subcategories.map((sub) => (
-                    <a key={sub} href="#" className={styles.dropdownItem}>
-                      {sub}
-                    </a>
-                  ))}
-                </div>
-              )}
-            </div>
+              {link.name}
+            </Link>
           ))}
         </nav>
 
-        {/* User Section */}
-        <div className={styles.userSection}>
-          <div className={styles.userInfo}>
-            <span className={styles.userName}>{user.name}</span>
-            <span className={styles.userRole}>{user.role}</span>
-          </div>
-          {(user.role === "ADMIN" || user.role === "SUPER_ADMIN") && (
-            <div className={styles.adminMenu}>
-              <button
-                onClick={() => router.push("/admin/users")}
-                className={styles.adminLink}
-                title="User Management"
-              >
-                Users
-              </button>
-              <button
-                onClick={() => router.push("/admin/products")}
-                className={styles.adminLink}
-                title="Product Management"
-              >
-                Products
-              </button>
+        <div className={styles.actions}>
+          <select
+            aria-label="Currency"
+            className={styles.currencySelect}
+            value={currency}
+            onChange={(e) => setCurrency(e.target.value)}
+          >
+            <option value="USD">USD</option>
+          </select>
+
+          {user ? (
+            <div className={styles.userActions}>
+              <Link href="/account" className={styles.userInfoLink}>
+                <span className={styles.userIcon} aria-hidden="true">
+                  <span className={styles.userIconHead} />
+                  <span className={styles.userIconBody} />
+                </span>
+                <div className={styles.userInfo}>
+                  <span className={styles.userTabLabel}>User</span>
+                  <span className={styles.userName}>{user.name}</span>
+                </div>
+              </Link>
+              <Link href="/wishlist" className={styles.iconButton}>
+                Wishlist ({count})
+              </Link>
+              <Link href="/orders" className={styles.iconButton}>
+                My Orders
+              </Link>
+              {(user.role === "ADMIN" || user.role === "SUPER_ADMIN") && (
+                <div className={styles.adminMenu}>
+                  <Link href="/admin/users" className={styles.iconButton}>
+                    Users
+                  </Link>
+                  <Link href="/admin/products" className={styles.iconButton}>
+                    Products
+                  </Link>
+                  <Link href="/admin/orders" className={styles.iconButton}>
+                    Orders
+                  </Link>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className={styles.userActions}>
+              <Link href="/login" className={styles.iconButton}>
+                Login
+              </Link>
+              <Link href="/login" className={styles.iconButtonAccent}>
+                Sign Up
+              </Link>
             </div>
           )}
-          <button onClick={handleLogout} className={styles.logoutBtn}>
-            Logout
-          </button>
         </div>
       </div>
+
+    
     </header>
   );
 }

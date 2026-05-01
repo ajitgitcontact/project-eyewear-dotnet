@@ -1,6 +1,6 @@
 .container {
   min-height: calc(100vh - 80px);
-  background: #f8f9fa;
+  background: transparent;
   padding: 40px 20px;
 }
 
@@ -14,19 +14,20 @@
 
 .formSection,
 .listSection {
-  background: white;
+  background: #171717;
   border-radius: 12px;
   padding: 30px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.24);
 }
 
 .formSection h2,
 .listSection h2 {
   font-size: 22px;
-  color: #333;
+  color: #f5f1e8;
   margin: 0 0 25px 0;
   padding-bottom: 15px;
-  border-bottom: 2px solid #667eea;
+  border-bottom: 2px solid #f58a1f;
 }
 
 .alert {
@@ -37,15 +38,15 @@
 }
 
 .alert.error {
-  background-color: #fee;
-  border-left: 4px solid #f44;
-  color: #c33;
+  background-color: rgba(255, 134, 134, 0.1);
+  border-left: 4px solid #ff8686;
+  color: #ffb1b1;
 }
 
 .alert.success {
-  background-color: #efe;
-  border-left: 4px solid #4a4;
-  color: #2a2;
+  background-color: rgba(116, 211, 155, 0.1);
+  border-left: 4px solid #74d39b;
+  color: #9ae2b7;
 }
 
 .form {
@@ -62,30 +63,32 @@
 
 .formGroup label {
   font-weight: 600;
-  color: #333;
+  color: #f5f1e8;
   font-size: 14px;
 }
 
 .formGroup input,
 .formGroup select {
   padding: 12px 15px;
-  border: 1px solid #ddd;
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 6px;
   font-size: 14px;
   font-family: inherit;
   transition: all 0.2s ease;
+  background: #101010;
+  color: #f5f1e8;
 }
 
 .formGroup input:focus,
 .formGroup select:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: #f58a1f;
+  box-shadow: 0 0 0 3px rgba(245, 138, 31, 0.12);
 }
 
 .formGroup input:hover,
 .formGroup select:hover {
-  border-color: #667eea;
+  border-color: #f58a1f;
 }
 
 .formActions {
@@ -106,24 +109,24 @@
 }
 
 .submitBtn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: #f58a1f;
+  color: #111;
   flex: 1;
 }
 
 .submitBtn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 6px 12px rgba(245, 138, 31, 0.18);
 }
 
 .cancelBtn {
-  background: #f0f0f0;
-  color: #333;
+  background: #262626;
+  color: #f5f1e8;
   flex: 0;
 }
 
 .cancelBtn:hover {
-  background: #e0e0e0;
+  background: #323232;
 }
 
 .tableWrapper {
@@ -137,21 +140,22 @@
 }
 
 .table th {
-  background: #f8f9fa;
+  background: #101010;
   padding: 15px;
   text-align: left;
   font-weight: 600;
-  color: #333;
-  border-bottom: 2px solid #ddd;
+  color: #f5f1e8;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
 }
 
 .table td {
   padding: 15px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(245, 241, 232, 0.72);
 }
 
 .table tbody tr:hover {
-  background: #f9f9f9;
+  background: #1d1d1d;
 }
 
 .role {
@@ -164,19 +168,19 @@
 }
 
 .role.admin {
-  background: #e8f0fe;
-  color: #1a73e8;
+  background: rgba(76, 144, 255, 0.14);
+  color: #8ab7ff;
 }
 
 .role.super_admin {
-  background: #fce5f3;
-  color: #c2185b;
+  background: rgba(245, 138, 31, 0.14);
+  color: #ffbf76;
   font-weight: 700;
 }
 
 .role.customer {
-  background: #f0f4c3;
-  color: #9c8e00;
+  background: rgba(116, 211, 155, 0.14);
+  color: #9ae2b7;
 }
 
 .actions {
@@ -196,22 +200,22 @@
 }
 
 .editBtn {
-  background: #e8f0fe;
-  color: #1a73e8;
+  background: rgba(76, 144, 255, 0.12);
+  color: #8ab7ff;
 }
 
 .editBtn:hover {
-  background: #1a73e8;
+  background: #2c6fe2;
   color: white;
 }
 
 .deleteBtn {
-  background: #fee;
-  color: #f44;
+  background: rgba(255, 134, 134, 0.12);
+  color: #ff9b9b;
 }
 
 .deleteBtn:hover {
-  background: #f44;
+  background: #c94d4d;
   color: white;
 }
 
@@ -219,7 +223,7 @@
 .empty {
   text-align: center;
   padding: 40px 20px;
-  color: #999;
+  color: rgba(245, 241, 232, 0.5);
   font-size: 14px;
 }
 

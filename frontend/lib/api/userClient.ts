@@ -60,10 +60,13 @@ export class UserManagementClient {
     });
 
     if (!response.ok) {
+      console.log("❌ Response not OK, attempting to read error...");
       const errorText = await response.text();
       console.log("❌ Raw error response:", errorText);
 
       let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      console.log("❌ Initial error message:", errorMessage);
+
       try {
         const errorJson = JSON.parse(errorText);
         console.log("❌ Parsed error JSON:", errorJson);
@@ -73,7 +76,7 @@ export class UserManagementClient {
         if (errorText) errorMessage = errorText;
       }
 
-      console.error("❌ Create user failed:", { status: response.status, message: errorMessage });
+      console.error("❌ Create user failed:", { status: response.status, statusText: response.statusText, message: errorMessage });
       throw new Error(errorMessage);
     }
 
