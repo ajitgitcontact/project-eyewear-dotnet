@@ -59,6 +59,10 @@ public class OrderItemService : IOrderItemService
             Quantity = dto.Quantity,
             Price = dto.Price,
             TotalPrice = dto.Quantity * dto.Price,
+            OriginalUnitPrice = dto.OriginalUnitPrice,
+            ProductDiscountAmount = dto.ProductDiscountAmount,
+            FinalUnitPrice = dto.FinalUnitPrice,
+            FinalLineTotal = dto.FinalLineTotal,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -88,6 +92,10 @@ public class OrderItemService : IOrderItemService
         item.Quantity = dto.Quantity;
         item.Price = dto.Price;
         item.TotalPrice = dto.Quantity * dto.Price;
+        item.OriginalUnitPrice = dto.OriginalUnitPrice;
+        item.ProductDiscountAmount = dto.ProductDiscountAmount;
+        item.FinalUnitPrice = dto.FinalUnitPrice;
+        item.FinalLineTotal = dto.FinalLineTotal;
 
         await _context.SaveChangesAsync();
         _logger.LogInformation("Order item updated. Input: OrderItemsId={OrderItemsId} => Output: SKU={Sku}", id, item.SKU);
@@ -135,6 +143,10 @@ public class OrderItemService : IOrderItemService
             Quantity = item.Quantity,
             Price = item.Price,
             TotalPrice = item.TotalPrice,
+            OriginalUnitPrice = item.OriginalUnitPrice,
+            ProductDiscountAmount = item.ProductDiscountAmount,
+            FinalUnitPrice = item.FinalUnitPrice,
+            FinalLineTotal = item.FinalLineTotal,
             CreatedAt = item.CreatedAt,
             UpdatedAt = item.UpdatedAt
         };

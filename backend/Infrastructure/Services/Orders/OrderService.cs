@@ -83,6 +83,11 @@ public class OrderService : IOrderService
             CustomerEmail = dto.CustomerEmail,
             CustomerPhone = dto.CustomerPhone,
             TotalAmount = dto.TotalAmount,
+            OriginalSubtotal = dto.OriginalSubtotal,
+            ProductDiscountTotal = dto.ProductDiscountTotal,
+            CouponCode = dto.CouponCode,
+            CouponDiscountAmount = dto.CouponDiscountAmount,
+            FinalAmount = dto.FinalAmount,
             PaymentStatus = dto.PaymentStatus,
             OrderStatus = dto.OrderStatus,
             Notes = dto.Notes,
@@ -111,6 +116,11 @@ public class OrderService : IOrderService
         order.CustomerEmail = dto.CustomerEmail;
         order.CustomerPhone = dto.CustomerPhone;
         order.TotalAmount = dto.TotalAmount;
+        order.OriginalSubtotal = dto.OriginalSubtotal;
+        order.ProductDiscountTotal = dto.ProductDiscountTotal;
+        order.CouponCode = dto.CouponCode;
+        order.CouponDiscountAmount = dto.CouponDiscountAmount;
+        order.FinalAmount = dto.FinalAmount;
         order.PaymentStatus = dto.PaymentStatus;
         order.OrderStatus = dto.OrderStatus;
         order.Notes = dto.Notes;
@@ -146,6 +156,11 @@ public class OrderService : IOrderService
             CustomerEmail = order.CustomerEmail,
             CustomerPhone = order.CustomerPhone,
             TotalAmount = order.TotalAmount,
+            OriginalSubtotal = order.OriginalSubtotal,
+            ProductDiscountTotal = order.ProductDiscountTotal,
+            CouponCode = order.CouponCode,
+            CouponDiscountAmount = order.CouponDiscountAmount,
+            FinalAmount = order.FinalAmount,
             PaymentStatus = order.PaymentStatus,
             OrderStatus = order.OrderStatus,
             Notes = order.Notes,

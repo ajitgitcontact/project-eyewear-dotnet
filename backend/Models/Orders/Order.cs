@@ -34,6 +34,21 @@ public class Order
     [Column(TypeName = "numeric(10,2)")]
     public decimal TotalAmount { get; set; }
 
+    [Column(TypeName = "numeric(10,2)")]
+    public decimal OriginalSubtotal { get; set; }
+
+    [Column(TypeName = "numeric(10,2)")]
+    public decimal ProductDiscountTotal { get; set; }
+
+    [MaxLength(100)]
+    public string? CouponCode { get; set; }
+
+    [Column(TypeName = "numeric(10,2)")]
+    public decimal CouponDiscountAmount { get; set; }
+
+    [Column(TypeName = "numeric(10,2)")]
+    public decimal FinalAmount { get; set; }
+
     [Column(TypeName = "payment_status")]
     public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.PENDING;
 

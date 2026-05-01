@@ -25,6 +25,10 @@ public class AppDbContext : DbContext
     public DbSet<OrderStatusLog> OrderStatusLogs => Set<OrderStatusLog>();
     public DbSet<CustomerPrescription> CustomerPrescriptions => Set<CustomerPrescription>();
     public DbSet<OrderNumberSequence> OrderNumberSequences => Set<OrderNumberSequence>();
+    public DbSet<Discount> Discounts => Set<Discount>();
+    public DbSet<DiscountProduct> DiscountProducts => Set<DiscountProduct>();
+    public DbSet<Coupon> Coupons => Set<Coupon>();
+    public DbSet<CouponUsage> CouponUsages => Set<CouponUsage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -66,6 +70,10 @@ public class AppDbContext : DbContext
             entity.ToTable("Orders", table =>
             {
                 table.HasCheckConstraint("CK_Orders_TotalAmount_NonNegative", "\"TotalAmount\" >= 0");
+                table.HasCheckConstraint("CK_Orders_OriginalSubtotal_NonNegative", "\"OriginalSubtotal\" >= 0");
+                table.HasCheckConstraint("CK_Orders_ProductDiscountTotal_NonNegative", "\"ProductDiscountTotal\" >= 0");
+                table.HasCheckConstraint("CK_Orders_CouponDiscountAmount_NonNegative", "\"CouponDiscountAmount\" >= 0");
+                table.HasCheckConstraint("CK_Orders_FinalAmount_NonNegative", "\"FinalAmount\" >= 0");
             });
 
             entity.HasKey(o => o.OrdersId);
@@ -88,6 +96,10 @@ public class AppDbContext : DbContext
                 table.HasCheckConstraint("CK_OrderItems_Quantity_Positive", "\"Quantity\" > 0");
                 table.HasCheckConstraint("CK_OrderItems_Price_NonNegative", "\"Price\" >= 0");
                 table.HasCheckConstraint("CK_OrderItems_TotalPrice_NonNegative", "\"TotalPrice\" >= 0");
+                table.HasCheckConstraint("CK_OrderItems_OriginalUnitPrice_NonNegative", "\"OriginalUnitPrice\" >= 0");
+                table.HasCheckConstraint("CK_OrderItems_ProductDiscountAmount_NonNegative", "\"ProductDiscountAmount\" >= 0");
+                table.HasCheckConstraint("CK_OrderItems_FinalUnitPrice_NonNegative", "\"FinalUnitPrice\" >= 0");
+                table.HasCheckConstraint("CK_OrderItems_FinalLineTotal_NonNegative", "\"FinalLineTotal\" >= 0");
             });
 
             entity.HasKey(oi => oi.OrderItemsId);
@@ -183,6 +195,83 @@ public class AppDbContext : DbContext
                 .WithMany(o => o.OrderStatusLogs)
                 .HasPrincipalKey(o => o.CustomerOrderId)
                 .HasForeignKey(osl => osl.CustomerOrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Discount>(entity =>
+        {
+            entity.ToTable("Discounts", table =>
+            {
+                table.HasCheckConstraint("CK_Discounts_DiscountValue_NonNegative", "\"DiscountValue\" >= 0");
+            });
+
+            entity.HasKey(d => d.DiscountId);
+            entity.HasIndex(d => d.IsActive);
+            entity.Property(d => d.DiscountType).HasConversion<string>().HasMaxLength(20);
+            entity.Property(d => d.AppliesTo).HasConversion<string>().HasMaxLength(20);
+            entity.Property(d => d.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(d => d.UpdatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
+        modelBuilder.Entity<DiscountProduct>(entity =>
+        {
+            entity.HasKey(dp => dp.DiscountProductId);
+            entity.HasIndex(dp => new { dp.DiscountId, dp.ProductId }).IsUnique();
+            entity.HasIndex(dp => dp.ProductId);
+            entity.Property(dp => dp.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(dp => dp.UpdatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.HasOne(dp => dp.Discount)
+                .WithMany(d => d.DiscountProducts)
+                .HasForeignKey(dp => dp.DiscountId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(dp => dp.Product)
+                .WithMany()
+                .HasForeignKey(dp => dp.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Coupon>(entity =>
+        {
+            entity.ToTable("Coupons", table =>
+            {
+                table.HasCheckConstraint("CK_Coupons_CouponValue_NonNegative", "\"CouponValue\" >= 0");
+                table.HasCheckConstraint("CK_Coupons_MinimumOrderAmount_NonNegative", "\"MinimumOrderAmount\" IS NULL OR \"MinimumOrderAmount\" >= 0");
+                table.HasCheckConstraint("CK_Coupons_MaximumCouponAmount_NonNegative", "\"MaximumCouponAmount\" IS NULL OR \"MaximumCouponAmount\" >= 0");
+            });
+
+            entity.HasKey(c => c.CouponId);
+            entity.HasIndex(c => c.CouponCode).IsUnique();
+            entity.HasIndex(c => c.IsActive);
+            entity.Property(c => c.CouponType).HasConversion<string>().HasMaxLength(20);
+            entity.Property(c => c.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(c => c.UpdatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
+        modelBuilder.Entity<CouponUsage>(entity =>
+        {
+            entity.HasKey(cu => cu.CouponUsageId);
+            entity.HasIndex(cu => cu.CouponId);
+            entity.HasIndex(cu => cu.UserId);
+            entity.HasIndex(cu => cu.CustomerOrderId);
+            entity.Property(cu => cu.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(cu => cu.UpdatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.HasOne(cu => cu.Coupon)
+                .WithMany(c => c.CouponUsages)
+                .HasForeignKey(cu => cu.CouponId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(cu => cu.User)
+                .WithMany()
+                .HasForeignKey(cu => cu.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(cu => cu.Order)
+                .WithMany()
+                .HasPrincipalKey(o => o.CustomerOrderId)
+                .HasForeignKey(cu => cu.CustomerOrderId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
@@ -286,6 +375,26 @@ public class AppDbContext : DbContext
         var orderNumberSequenceEntries = ChangeTracker.Entries<OrderNumberSequence>()
             .Where(e => e.State == EntityState.Modified);
         foreach (var entry in orderNumberSequenceEntries)
+            entry.Entity.UpdatedAt = DateTime.UtcNow;
+
+        var discountEntries = ChangeTracker.Entries<Discount>()
+            .Where(e => e.State == EntityState.Modified);
+        foreach (var entry in discountEntries)
+            entry.Entity.UpdatedAt = DateTime.UtcNow;
+
+        var discountProductEntries = ChangeTracker.Entries<DiscountProduct>()
+            .Where(e => e.State == EntityState.Modified);
+        foreach (var entry in discountProductEntries)
+            entry.Entity.UpdatedAt = DateTime.UtcNow;
+
+        var couponEntries = ChangeTracker.Entries<Coupon>()
+            .Where(e => e.State == EntityState.Modified);
+        foreach (var entry in couponEntries)
+            entry.Entity.UpdatedAt = DateTime.UtcNow;
+
+        var couponUsageEntries = ChangeTracker.Entries<CouponUsage>()
+            .Where(e => e.State == EntityState.Modified);
+        foreach (var entry in couponUsageEntries)
             entry.Entity.UpdatedAt = DateTime.UtcNow;
     }
 }

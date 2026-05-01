@@ -19,6 +19,8 @@ public static class InfrastructureServiceCollectionExtensions
                 npgsqlOptions.MapEnum<PaymentMethod>("payment_method");
                 npgsqlOptions.MapEnum<PaymentTxnStatus>("payment_txn_status");
                 npgsqlOptions.MapEnum<AddressType>("address_type");
+                npgsqlOptions.MapEnum<DiscountValueType>("discount_value_type");
+                npgsqlOptions.MapEnum<DiscountAppliesTo>("discount_applies_to");
             }));
 
         services.AddScoped<DataSeeder>();

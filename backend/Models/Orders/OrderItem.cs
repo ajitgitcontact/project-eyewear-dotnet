@@ -34,6 +34,18 @@ public class OrderItem
     [Column(TypeName = "numeric(10,2)")]
     public decimal TotalPrice { get; set; }
 
+    [Column(TypeName = "numeric(10,2)")]
+    public decimal OriginalUnitPrice { get; set; }
+
+    [Column(TypeName = "numeric(10,2)")]
+    public decimal ProductDiscountAmount { get; set; }
+
+    [Column(TypeName = "numeric(10,2)")]
+    public decimal FinalUnitPrice { get; set; }
+
+    [Column(TypeName = "numeric(10,2)")]
+    public decimal FinalLineTotal { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

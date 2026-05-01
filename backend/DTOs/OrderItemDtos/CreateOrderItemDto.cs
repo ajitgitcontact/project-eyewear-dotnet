@@ -23,4 +23,16 @@ public class CreateOrderItemDto
 
     [Range(0, double.MaxValue)]
     public decimal Price { get; set; }
+
+    [Range(0, double.MaxValue)]
+    public decimal OriginalUnitPrice { get; set; }
+
+    [Range(0, double.MaxValue)]
+    public decimal ProductDiscountAmount { get; set; }
+
+    [Range(0, double.MaxValue)]
+    public decimal FinalUnitPrice { get; set; }
+
+    [Range(0, double.MaxValue)]
+    public decimal FinalLineTotal { get; set; }
 }

@@ -11,6 +11,11 @@ public class OrderResponseDto
     public string CustomerEmail { get; set; } = string.Empty;
     public string? CustomerPhone { get; set; }
     public decimal TotalAmount { get; set; }
+    public decimal OriginalSubtotal { get; set; }
+    public decimal ProductDiscountTotal { get; set; }
+    public string? CouponCode { get; set; }
+    public decimal CouponDiscountAmount { get; set; }
+    public decimal FinalAmount { get; set; }
     public PaymentStatus PaymentStatus { get; set; }
     public OrderStatus OrderStatus { get; set; }
     public string? Notes { get; set; }

@@ -32,6 +32,9 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<IFetchCompleteOrderService, FetchCompleteOrderService>();
         services.AddScoped<IOrderSearchService, OrderSearchService>();
         services.AddScoped<ICustomerOrderListService, CustomerOrderListService>();
+        services.AddScoped<IAdminDiscountService, AdminDiscountService>();
+        services.AddScoped<IAdminCouponService, AdminCouponService>();
+        services.AddScoped<IOrderLogQueryService, OrderLogQueryService>();
 
         return services;
     }

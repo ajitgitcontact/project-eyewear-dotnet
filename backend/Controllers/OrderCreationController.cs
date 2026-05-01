@@ -28,7 +28,8 @@ public class OrderCreationController : ControllerBase
     /// </summary>
     /// <remarks>
     /// CustomerOrderId, UserId, item prices, totals, payment status, and order status are generated or calculated by the backend.
-    /// Optional coupon fields are accepted for future discount support, but the current discount service returns zero discount.
+    /// Active admin discounts are applied automatically. Customers may pass CouponCode only; coupon amounts and final totals from the frontend are ignored.
+    /// The response includes original subtotal, product discount total, coupon discount amount, and final payable amount snapshots.
     /// </remarks>
     [HttpPost("create")]
     [Authorize(Roles = Roles.Customer + "," + Roles.Admin + "," + Roles.SuperAdmin)]

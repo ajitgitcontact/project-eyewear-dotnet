@@ -363,26 +363,40 @@ Generation uses a PostgreSQL upsert on `SequenceDate`, so concurrent requests do
 The backend calculates all pricing:
 
 - Item unit price = `Products.BasePrice + selected CustomizationValues.AdditionalPrice`
-- Item total = unit price * quantity
-- Subtotal = sum of item totals
-- Discount amount = returned by `IDiscountService`
-- Final amount = subtotal - discount amount
+- Original subtotal = sum of original item totals
+- Active admin discounts from `Discounts` / `DiscountProducts` are applied automatically per item
+- Product discount total = sum of item-level admin discounts
+- Customer coupon discount is applied after product discounts when `couponCode` is provided
+- Final amount = original subtotal - product discounts - coupon discount
 
-Current discount status:
+The frontend must only send `couponCode`; it must not send or trust `originalSubtotal`, `productDiscountTotal`, `couponDiscountAmount`, item totals, or `finalAmount`. Those values are backend-calculated and stored as immutable order snapshots:
 
-- No `Coupons`, `DiscountRules`, `ProductDiscounts`, `CartOffers`, or similar tables currently exist.
-- No discount entities were added.
-- `DiscountService` is a placeholder extension point.
-- `couponCode` and `discountCode` may be sent by the frontend, but currently no eligibility check, expiry check, active/inactive check, usage limit, or amount calculation exists.
-- Current behavior is always `discountAmount = 0` and `finalAmount = subtotal`.
-- Invalid, expired, or inactive coupon codes cannot be detected yet because there is no discount schema.
+- `Orders.OriginalSubtotal`
+- `Orders.ProductDiscountTotal`
+- `Orders.CouponCode`
+- `Orders.CouponDiscountAmount`
+- `Orders.FinalAmount`
+- `OrderItems.OriginalUnitPrice`
+- `OrderItems.ProductDiscountAmount`
+- `OrderItems.FinalUnitPrice`
+- `OrderItems.FinalLineTotal`
 
-Pending discount TODOs:
+Coupon validation checks active state, date window, minimum order amount, global usage limit, per-user usage limit, and maximum coupon amount for percentage coupons. Invalid/inactive/expired coupons fail with `400`.
 
-- Add coupon/discount tables.
-- Add active/expiry/min-order/usage-limit validation.
-- Add product-level, order-value, and user-specific discount rules.
-- Decide whether invalid coupon codes should fail with `400` or be ignored.
+Admin discount and coupon APIs:
+
+| Method | Endpoint | Roles | Purpose |
+|---|---|---|---|
+| `GET` | `/api/admin/discounts` | `ADMIN`, `SUPER_ADMIN` | List admin discounts |
+| `POST` | `/api/admin/discounts` | `ADMIN`, `SUPER_ADMIN` | Create all-product or product-specific discount |
+| `PUT` | `/api/admin/discounts/{id}` | `ADMIN`, `SUPER_ADMIN` | Update discount |
+| `DELETE` | `/api/admin/discounts/{id}` | `ADMIN`, `SUPER_ADMIN` | Delete discount |
+| `GET` | `/api/admin/coupons` | `ADMIN`, `SUPER_ADMIN` | List coupons |
+| `POST` | `/api/admin/coupons` | `ADMIN`, `SUPER_ADMIN` | Create coupon |
+| `PUT` | `/api/admin/coupons/{id}` | `ADMIN`, `SUPER_ADMIN` | Update coupon |
+| `DELETE` | `/api/admin/coupons/{id}` | `ADMIN`, `SUPER_ADMIN` | Delete coupon |
+
+Order journey logs are stored in `OrderStatusLogs` with `EventType`, `LogMessage`, `PaymentStatus`, and `CreatedByUserId`. Admins can inspect them with `GET /api/orders/{customerOrderId}/logs`.
 
 #### Validation Rules
 

@@ -18,7 +18,18 @@ public class OrderStatusLog
     [Column(TypeName = "order_status")]
     public OrderStatus Status { get; set; }
 
+    [Column(TypeName = "payment_status")]
+    public PaymentStatus? PaymentStatus { get; set; }
+
+    [Required]
+    [MaxLength(100)]
+    public string EventType { get; set; } = "ORDER_STATUS_UPDATED";
+
     public string? Comment { get; set; }
+
+    public string? LogMessage { get; set; }
+
+    public int? CreatedByUserId { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

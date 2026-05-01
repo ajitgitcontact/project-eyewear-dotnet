@@ -6,7 +6,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:5047/"
+      "url": "http://localhost:5081/"
     }
   ],
   "paths": {
@@ -40,6 +40,259 @@
             "description": "OK"
           }
         }
+      }
+    },
+    "/api/admin/coupons": {
+      "get": {
+        "tags": [
+          "Admin Coupons"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CouponResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": [ ]
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Admin Coupons"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCouponDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCouponDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCouponDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CouponResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": [ ]
+          }
+        ]
+      }
+    },
+    "/api/admin/coupons/{id}": {
+      "get": {
+        "tags": [
+          "Admin Coupons"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CouponResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": [ ]
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "Admin Coupons"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCouponDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCouponDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCouponDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CouponResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": [ ]
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Admin Coupons"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content",
+            "content": {
+              "application/json": { }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": [ ]
+          }
+        ]
       }
     },
     "/api/customer/orders": {
@@ -160,6 +413,249 @@
             "description": "OK"
           }
         }
+      }
+    },
+    "/api/admin/discounts": {
+      "get": {
+        "tags": [
+          "Admin Discounts"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DiscountResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": [ ]
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Admin Discounts"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDiscountDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDiscountDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDiscountDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiscountResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": [ ]
+          }
+        ]
+      }
+    },
+    "/api/admin/discounts/{id}": {
+      "get": {
+        "tags": [
+          "Admin Discounts"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiscountResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": [ ]
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "Admin Discounts"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDiscountDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDiscountDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDiscountDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiscountResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": [ ]
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Admin Discounts"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content",
+            "content": {
+              "application/json": { }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": [ ]
+          }
+        ]
       }
     },
     "/api/orders/create": {
@@ -420,6 +916,89 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CompleteOrderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": { }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": [ ]
+          }
+        ]
+      }
+    },
+    "/api/orders/{customerOrderId}/logs": {
+      "get": {
+        "tags": [
+          "Orders"
+        ],
+        "parameters": [
+          {
+            "name": "customerOrderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrderStatusLogResponseDto"
+                  }
                 }
               }
             }
@@ -1697,6 +2276,22 @@
             "type": "number",
             "format": "double"
           },
+          "originalUnitPrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "productDiscountAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "finalUnitPrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "finalLineTotal": {
+            "type": "number",
+            "format": "double"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -1843,8 +2438,23 @@
           "status": {
             "$ref": "#/components/schemas/OrderStatus"
           },
+          "paymentStatus": {
+            "$ref": "#/components/schemas/NullableOfPaymentStatus"
+          },
+          "eventType": {
+            "type": "string"
+          },
           "comment": {
             "type": "string",
+            "nullable": true
+          },
+          "logMessage": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdByUserId": {
+            "type": "integer",
+            "format": "int32",
             "nullable": true
           },
           "createdAt": {
@@ -1884,6 +2494,26 @@
             "type": "number",
             "format": "double"
           },
+          "originalSubtotal": {
+            "type": "number",
+            "format": "double"
+          },
+          "productDiscountTotal": {
+            "type": "number",
+            "format": "double"
+          },
+          "couponCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "couponDiscountAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "finalAmount": {
+            "type": "number",
+            "format": "double"
+          },
           "paymentStatus": {
             "$ref": "#/components/schemas/PaymentStatus"
           },
@@ -1901,6 +2531,132 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "CouponResponseDto": {
+        "type": "object",
+        "properties": {
+          "couponId": {
+            "type": "string"
+          },
+          "couponCode": {
+            "type": "string"
+          },
+          "couponName": {
+            "type": "string"
+          },
+          "couponType": {
+            "$ref": "#/components/schemas/DiscountValueType"
+          },
+          "couponValue": {
+            "type": "number",
+            "format": "double"
+          },
+          "minimumOrderAmount": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "maximumCouponAmount": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "usageLimit": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "perUserUsageLimit": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CreateCouponDto": {
+        "required": [
+          "couponCode",
+          "couponName"
+        ],
+        "type": "object",
+        "properties": {
+          "couponCode": {
+            "maxLength": 100,
+            "type": "string"
+          },
+          "couponName": {
+            "maxLength": 150,
+            "type": "string"
+          },
+          "couponType": {
+            "$ref": "#/components/schemas/DiscountValueType"
+          },
+          "couponValue": {
+            "minimum": 0,
+            "type": "number",
+            "format": "double"
+          },
+          "minimumOrderAmount": {
+            "minimum": 0,
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "maximumCouponAmount": {
+            "minimum": 0,
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "usageLimit": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "perUserUsageLimit": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
           }
         }
       },
@@ -1974,6 +2730,49 @@
             "minimum": 0,
             "type": "number",
             "format": "double"
+          }
+        }
+      },
+      "CreateDiscountDto": {
+        "required": [
+          "discountName"
+        ],
+        "type": "object",
+        "properties": {
+          "discountName": {
+            "maxLength": 150,
+            "type": "string"
+          },
+          "discountType": {
+            "$ref": "#/components/schemas/DiscountValueType"
+          },
+          "discountValue": {
+            "minimum": 0,
+            "type": "number",
+            "format": "double"
+          },
+          "appliesTo": {
+            "$ref": "#/components/schemas/DiscountAppliesTo"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "productIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
           }
         }
       },
@@ -2385,6 +3184,61 @@
           }
         }
       },
+      "DiscountAppliesTo": {
+        "type": "integer"
+      },
+      "DiscountResponseDto": {
+        "type": "object",
+        "properties": {
+          "discountId": {
+            "type": "string"
+          },
+          "discountName": {
+            "type": "string"
+          },
+          "discountType": {
+            "$ref": "#/components/schemas/DiscountValueType"
+          },
+          "discountValue": {
+            "type": "number",
+            "format": "double"
+          },
+          "appliesTo": {
+            "$ref": "#/components/schemas/DiscountAppliesTo"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "productIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "DiscountValueType": {
+        "type": "integer"
+      },
       "LoginDto": {
         "required": [
           "email",
@@ -2399,6 +3253,10 @@
             "type": "string"
           }
         }
+      },
+      "NullableOfPaymentStatus": {
+        "type": "integer",
+        "nullable": true
       },
       "OrderAddressResponseDto": {
         "type": "object",
@@ -2690,6 +3548,22 @@
             "type": "number",
             "format": "double"
           },
+          "originalSubtotal": {
+            "type": "number",
+            "format": "double"
+          },
+          "productDiscountTotal": {
+            "type": "number",
+            "format": "double"
+          },
+          "couponCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "couponDiscountAmount": {
+            "type": "number",
+            "format": "double"
+          },
           "discountAmount": {
             "type": "number",
             "format": "double"
@@ -2787,6 +3661,22 @@
             "type": "number",
             "format": "double"
           },
+          "originalUnitPrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "productDiscountAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "finalUnitPrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "finalLineTotal": {
+            "type": "number",
+            "format": "double"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -2821,6 +3711,26 @@
             "nullable": true
           },
           "totalAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "originalSubtotal": {
+            "type": "number",
+            "format": "double"
+          },
+          "productDiscountTotal": {
+            "type": "number",
+            "format": "double"
+          },
+          "couponCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "couponDiscountAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "finalAmount": {
             "type": "number",
             "format": "double"
           },
@@ -2925,8 +3835,23 @@
           "status": {
             "$ref": "#/components/schemas/OrderStatus"
           },
+          "paymentStatus": {
+            "$ref": "#/components/schemas/NullableOfPaymentStatus"
+          },
+          "eventType": {
+            "type": "string"
+          },
           "comment": {
             "type": "string",
+            "nullable": true
+          },
+          "logMessage": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdByUserId": {
+            "type": "integer",
+            "format": "int32",
             "nullable": true
           },
           "createdAt": {
@@ -3039,6 +3964,70 @@
           }
         }
       },
+      "UpdateCouponDto": {
+        "required": [
+          "couponCode",
+          "couponName"
+        ],
+        "type": "object",
+        "properties": {
+          "couponCode": {
+            "maxLength": 100,
+            "type": "string"
+          },
+          "couponName": {
+            "maxLength": 150,
+            "type": "string"
+          },
+          "couponType": {
+            "$ref": "#/components/schemas/DiscountValueType"
+          },
+          "couponValue": {
+            "minimum": 0,
+            "type": "number",
+            "format": "double"
+          },
+          "minimumOrderAmount": {
+            "minimum": 0,
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "maximumCouponAmount": {
+            "minimum": 0,
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "usageLimit": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "perUserUsageLimit": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        }
+      },
       "UpdateCustomizationImageDto": {
         "required": [
           "imageUrl"
@@ -3084,6 +4073,49 @@
             "minimum": 0,
             "type": "number",
             "format": "double"
+          }
+        }
+      },
+      "UpdateDiscountDto": {
+        "required": [
+          "discountName"
+        ],
+        "type": "object",
+        "properties": {
+          "discountName": {
+            "maxLength": 150,
+            "type": "string"
+          },
+          "discountType": {
+            "$ref": "#/components/schemas/DiscountValueType"
+          },
+          "discountValue": {
+            "minimum": 0,
+            "type": "number",
+            "format": "double"
+          },
+          "appliesTo": {
+            "$ref": "#/components/schemas/DiscountAppliesTo"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "productIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
           }
         }
       },
@@ -3216,10 +4248,16 @@
       "name": "Auth"
     },
     {
+      "name": "Admin Coupons"
+    },
+    {
       "name": "Customer Orders"
     },
     {
       "name": "DbTest"
+    },
+    {
+      "name": "Admin Discounts"
     },
     {
       "name": "Orders"

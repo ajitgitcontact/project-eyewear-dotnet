@@ -27,6 +27,21 @@ public class CreateOrderDto
     [Range(0, double.MaxValue)]
     public decimal TotalAmount { get; set; }
 
+    [Range(0, double.MaxValue)]
+    public decimal OriginalSubtotal { get; set; }
+
+    [Range(0, double.MaxValue)]
+    public decimal ProductDiscountTotal { get; set; }
+
+    [MaxLength(100)]
+    public string? CouponCode { get; set; }
+
+    [Range(0, double.MaxValue)]
+    public decimal CouponDiscountAmount { get; set; }
+
+    [Range(0, double.MaxValue)]
+    public decimal FinalAmount { get; set; }
+
     public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.PENDING;
     public OrderStatus OrderStatus { get; set; } = OrderStatus.CREATED;
     public string? Notes { get; set; }

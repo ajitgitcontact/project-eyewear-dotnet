@@ -61,6 +61,7 @@ public class OrderCreationService : IOrderCreationService
     public async Task<OrderCreationResponseDto> CreateAsync(int userId, OrderCreationRequestDto dto)
     {
         var currentStep = "start";
+        string? customerOrderId = null;
         if (dto is null)
             throw new BadRequestException("Request body is required.");
 
@@ -72,10 +73,12 @@ public class OrderCreationService : IOrderCreationService
         try
         {
             currentStep = "validation";
+            _logger.LogInformation("Product validation started. UserId={UserId}", userId);
             await _validator.ValidateAsync(userId, dto);
+            _logger.LogInformation("Product validation completed. UserId={UserId}", userId);
 
             currentStep = "customer_order_id_generation";
-            var customerOrderId = await _customerOrderIdGenerator.GenerateAsync();
+            customerOrderId = await _customerOrderIdGenerator.GenerateAsync();
             _logger.LogInformation("CustomerOrderId generated for order creation. UserId={UserId}, CustomerOrderId={CustomerOrderId}", userId, customerOrderId);
 
             currentStep = "totals_calculation";
@@ -89,8 +92,9 @@ public class OrderCreationService : IOrderCreationService
                 UserId = userId,
                 Subtotal = subtotal,
                 CouponCode = dto.CouponCode ?? dto.DiscountCode,
-                Items = preparedItems.Select(i => new DiscountCalculationItem
+                Items = preparedItems.Select((i, index) => new DiscountCalculationItem
                 {
+                    LineNumber = index,
                     ProductId = i.Product.ProductId,
                     SKU = i.Product.SKU,
                     Quantity = i.Request.Quantity,
@@ -115,30 +119,48 @@ public class OrderCreationService : IOrderCreationService
                 CustomerEmail = dto.Customer.Email,
                 CustomerPhone = dto.Customer.Phone,
                 TotalAmount = discount.FinalAmount,
+                OriginalSubtotal = discount.OriginalSubtotal,
+                ProductDiscountTotal = discount.ProductDiscountTotal,
+                CouponCode = discount.CouponCode,
+                CouponDiscountAmount = discount.CouponDiscountAmount,
+                FinalAmount = discount.FinalAmount,
                 PaymentStatus = PaymentStatus.PENDING,
                 OrderStatus = OrderStatus.CREATED,
                 Notes = dto.Notes
             });
             _logger.LogInformation("Order record created. UserId={UserId}, CustomerOrderId={CustomerOrderId}, OrdersId={OrdersId}", userId, customerOrderId, order.OrdersId);
+            await AddJourneyLogAsync(customerOrderId, OrderStatus.CREATED, PaymentStatus.PENDING, "ORDER_CREATION_STARTED", "Order creation started.", userId);
+            await AddJourneyLogAsync(customerOrderId, OrderStatus.CREATED, PaymentStatus.PENDING, "PRODUCT_VALIDATION_COMPLETED", "Product validation completed.", userId);
+            await AddJourneyLogAsync(customerOrderId, OrderStatus.CREATED, PaymentStatus.PENDING, "STOCK_VALIDATION_COMPLETED", "Stock validation completed.", userId);
+            if (discount.ProductDiscountTotal > 0)
+                await AddJourneyLogAsync(customerOrderId, OrderStatus.CREATED, PaymentStatus.PENDING, "PRODUCT_DISCOUNT_APPLIED", $"Product discount applied: {discount.ProductDiscountTotal:0.00}.", userId);
+            if (discount.CouponDiscountAmount > 0)
+                await AddJourneyLogAsync(customerOrderId, OrderStatus.CREATED, PaymentStatus.PENDING, "COUPON_APPLIED", $"Coupon applied: {discount.CouponCode}.", userId);
+            await AddJourneyLogAsync(customerOrderId, OrderStatus.CREATED, PaymentStatus.PENDING, "ORDER_CREATED", "Order record created.", userId);
 
             currentStep = "items_creation";
             var createdItems = new List<OrderCreationItemResponseDto>();
-            foreach (var preparedItem in preparedItems)
+            foreach (var preparedItem in preparedItems.Select((value, index) => new { value, index }))
             {
+                var itemDiscount = discount.Items.First(i => i.LineNumber == preparedItem.index);
                 var item = await _orderItemService.CreateAsync(new CreateOrderItemDto
                 {
                     CustomerOrderId = customerOrderId,
-                    ProductId = preparedItem.Product.ProductId,
-                    SKU = preparedItem.Product.SKU,
-                    ProductName = preparedItem.Product.Name,
-                    Quantity = preparedItem.Request.Quantity,
-                    Price = preparedItem.UnitPrice
+                    ProductId = preparedItem.value.Product.ProductId,
+                    SKU = preparedItem.value.Product.SKU,
+                    ProductName = preparedItem.value.Product.Name,
+                    Quantity = preparedItem.value.Request.Quantity,
+                    Price = itemDiscount.FinalUnitPrice,
+                    OriginalUnitPrice = itemDiscount.OriginalUnitPrice,
+                    ProductDiscountAmount = itemDiscount.ProductDiscountAmount,
+                    FinalUnitPrice = itemDiscount.FinalUnitPrice,
+                    FinalLineTotal = itemDiscount.FinalLineTotal
                 });
                 _logger.LogInformation("Order item created. CustomerOrderId={CustomerOrderId}, OrderItemId={OrderItemId}, ProductId={ProductId}", customerOrderId, item.OrderItemsId, item.ProductId);
 
                 currentStep = "customizations_creation";
                 var customizations = new List<OrderItemCustomizationResponseDto>();
-                foreach (var customization in preparedItem.Customizations)
+                foreach (var customization in preparedItem.value.Customizations)
                 {
                     var createdCustomization = await _orderItemCustomizationService.CreateAsync(new CreateOrderItemCustomizationDto
                     {
@@ -158,6 +180,7 @@ public class OrderCreationService : IOrderCreationService
                     Customizations = customizations
                 });
             }
+            await AddJourneyLogAsync(customerOrderId, OrderStatus.CREATED, PaymentStatus.PENDING, "ORDER_ITEMS_CREATED", "Order items created.", userId);
 
             currentStep = "address_creation";
             var address = await _orderAddressService.CreateAsync(new CreateOrderAddressDto
@@ -193,6 +216,13 @@ public class OrderCreationService : IOrderCreationService
                 });
             _logger.LogInformation("Order prescription step completed. CustomerOrderId={CustomerOrderId}, Created={Created}", customerOrderId, prescription is not null);
 
+            currentStep = "coupon_usage_creation";
+            if (!string.IsNullOrWhiteSpace(discount.CouponId) && !string.IsNullOrWhiteSpace(discount.CouponCode) && discount.CouponDiscountAmount > 0)
+            {
+                await _discountService.RecordCouponUsageAsync(discount.CouponId, userId, customerOrderId, discount.CouponCode, discount.CouponDiscountAmount);
+                await AddJourneyLogAsync(customerOrderId, OrderStatus.CREATED, PaymentStatus.PENDING, "COUPON_USAGE_CREATED", "Coupon usage recorded.", userId);
+            }
+
             currentStep = "payment_creation";
             var payment = await _paymentService.CreateAsync(new CreatePaymentDto
             {
@@ -203,19 +233,16 @@ public class OrderCreationService : IOrderCreationService
                 Status = PaymentTxnStatus.INITIATED
             });
             _logger.LogInformation("Payment record created. CustomerOrderId={CustomerOrderId}, PaymentsId={PaymentsId}, Method={PaymentMethod}, Status={PaymentStatus}", customerOrderId, payment.PaymentsId, payment.Method, payment.Status);
+            await AddJourneyLogAsync(customerOrderId, OrderStatus.CREATED, PaymentStatus.PENDING, "PAYMENT_CREATED", "Payment row created.", userId);
 
             currentStep = "status_log_creation";
-            var statusLog = await _orderStatusLogService.CreateAsync(new CreateOrderStatusLogDto
-            {
-                CustomerOrderId = customerOrderId,
-                Status = OrderStatus.CREATED,
-                Comment = "Order created."
-            });
+            var statusLog = await AddJourneyLogAsync(customerOrderId, OrderStatus.CREATED, PaymentStatus.PENDING, "ORDER_CONFIRMED", "Order confirmed.", userId);
             _logger.LogInformation("Order status log created. CustomerOrderId={CustomerOrderId}, OrderStatusLogsId={OrderStatusLogsId}", customerOrderId, statusLog.OrderStatusLogsId);
 
             currentStep = "inventory_update";
             await UpdateInventoryAsync(preparedItems);
             _logger.LogInformation("Inventory updated for order. CustomerOrderId={CustomerOrderId}, ItemCount={ItemCount}", customerOrderId, preparedItems.Count);
+            await AddJourneyLogAsync(customerOrderId, OrderStatus.CREATED, PaymentStatus.PENDING, "STOCK_UPDATED", "Stock updated.", userId);
 
             currentStep = "transaction_commit";
             await transaction.CommitAsync();
@@ -225,6 +252,10 @@ public class OrderCreationService : IOrderCreationService
             {
                 CustomerOrderId = customerOrderId,
                 Subtotal = discount.Subtotal,
+                OriginalSubtotal = discount.OriginalSubtotal,
+                ProductDiscountTotal = discount.ProductDiscountTotal,
+                CouponCode = discount.CouponCode,
+                CouponDiscountAmount = discount.CouponDiscountAmount,
                 DiscountAmount = discount.DiscountAmount,
                 FinalAmount = discount.FinalAmount,
                 Order = order,
@@ -315,6 +346,26 @@ public class OrderCreationService : IOrderCreationService
 
         if (discount.FinalAmount != subtotal - discount.DiscountAmount)
             throw new BadRequestException("Invalid final order amount.");
+    }
+
+    private async Task<OrderStatusLogResponseDto> AddJourneyLogAsync(
+        string customerOrderId,
+        OrderStatus orderStatus,
+        PaymentStatus paymentStatus,
+        string eventType,
+        string message,
+        int userId)
+    {
+        return await _orderStatusLogService.CreateAsync(new CreateOrderStatusLogDto
+        {
+            CustomerOrderId = customerOrderId,
+            Status = orderStatus,
+            PaymentStatus = paymentStatus,
+            EventType = eventType,
+            Comment = message,
+            LogMessage = message,
+            CreatedByUserId = userId
+        });
     }
 
     private async Task UpdateInventoryAsync(IEnumerable<PreparedOrderItem> items)

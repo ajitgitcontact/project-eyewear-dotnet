@@ -186,3 +186,71 @@ Authorization: Bearer {{customerToken}}
 Accept: application/json
 
 ###
+
+# ------------------------------
+# ADMIN DISCOUNTS / COUPONS
+# ------------------------------
+
+# Admin/Super Admin: create an all-product percentage discount.
+POST {{backend_HostAddress}}/api/admin/discounts
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "discountName": "Launch Sale 10%",
+  "discountType": "PERCENTAGE",
+  "discountValue": 10,
+  "appliesTo": "ALL",
+  "startDate": null,
+  "endDate": null,
+  "isActive": true,
+  "productIds": []
+}
+
+###
+
+# Admin/Super Admin: create a product-specific flat discount.
+POST {{backend_HostAddress}}/api/admin/discounts
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "discountName": "Product 32 Flat 500",
+  "discountType": "FLAT",
+  "discountValue": 500,
+  "appliesTo": "PRODUCT",
+  "startDate": null,
+  "endDate": null,
+  "isActive": true,
+  "productIds": [32]
+}
+
+###
+
+# Admin/Super Admin: create a customer coupon.
+POST {{backend_HostAddress}}/api/admin/coupons
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "couponCode": "WELCOME500",
+  "couponName": "Welcome coupon",
+  "couponType": "FLAT",
+  "couponValue": 500,
+  "minimumOrderAmount": 1000,
+  "maximumCouponAmount": null,
+  "usageLimit": 100,
+  "perUserUsageLimit": 1,
+  "startDate": null,
+  "endDate": null,
+  "isActive": true
+}
+
+###
+
+# Admin/Super Admin: view order journey logs.
+GET {{backend_HostAddress}}/api/orders/{{customerOrderId}}/logs
+Authorization: Bearer {{adminToken}}
+Accept: application/json
+
+###

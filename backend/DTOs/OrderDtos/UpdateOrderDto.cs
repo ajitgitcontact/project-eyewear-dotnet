@@ -21,6 +21,21 @@ public class UpdateOrderDto
     [Range(0, double.MaxValue)]
     public decimal TotalAmount { get; set; }
 
+    [Range(0, double.MaxValue)]
+    public decimal OriginalSubtotal { get; set; }
+
+    [Range(0, double.MaxValue)]
+    public decimal ProductDiscountTotal { get; set; }
+
+    [MaxLength(100)]
+    public string? CouponCode { get; set; }
+
+    [Range(0, double.MaxValue)]
+    public decimal CouponDiscountAmount { get; set; }
+
+    [Range(0, double.MaxValue)]
+    public decimal FinalAmount { get; set; }
+
     public PaymentStatus PaymentStatus { get; set; }
     public OrderStatus OrderStatus { get; set; }
     public string? Notes { get; set; }

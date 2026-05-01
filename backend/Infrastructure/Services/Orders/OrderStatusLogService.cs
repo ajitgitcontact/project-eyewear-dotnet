@@ -23,7 +23,7 @@ public class OrderStatusLogService : IOrderStatusLogService
         _logger.LogInformation("Fetching order status logs. Input: CustomerOrderId={CustomerOrderId}", customerOrderId);
         var logs = await _context.OrderStatusLogs
             .Where(osl => osl.CustomerOrderId == customerOrderId)
-            .OrderByDescending(osl => osl.CreatedAt)
+            .OrderBy(osl => osl.CreatedAt)
             .Select(osl => MapToDto(osl))
             .ToListAsync();
         _logger.LogInformation("Fetched order status logs. Input: CustomerOrderId={CustomerOrderId} => Output: Count={Count}", customerOrderId, logs.Count);
@@ -49,7 +49,11 @@ public class OrderStatusLogService : IOrderStatusLogService
         {
             CustomerOrderId = dto.CustomerOrderId,
             Status = dto.Status,
+            PaymentStatus = dto.PaymentStatus,
+            EventType = dto.EventType,
             Comment = dto.Comment,
+            LogMessage = dto.LogMessage,
+            CreatedByUserId = dto.CreatedByUserId,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -68,7 +72,11 @@ public class OrderStatusLogService : IOrderStatusLogService
             throw new NotFoundException("Order status log not found.");
 
         log.Status = dto.Status;
+        log.PaymentStatus = dto.PaymentStatus;
+        log.EventType = dto.EventType;
         log.Comment = dto.Comment;
+        log.LogMessage = dto.LogMessage;
+        log.CreatedByUserId = dto.CreatedByUserId;
 
         await _context.SaveChangesAsync();
         _logger.LogInformation("Order status log updated. Input: OrderStatusLogsId={OrderStatusLogsId}", id);
@@ -101,7 +109,11 @@ public class OrderStatusLogService : IOrderStatusLogService
             OrderStatusLogsId = log.OrderStatusLogsId,
             CustomerOrderId = log.CustomerOrderId,
             Status = log.Status,
+            PaymentStatus = log.PaymentStatus,
+            EventType = log.EventType,
             Comment = log.Comment,
+            LogMessage = log.LogMessage,
+            CreatedByUserId = log.CreatedByUserId,
             CreatedAt = log.CreatedAt,
             UpdatedAt = log.UpdatedAt
         };

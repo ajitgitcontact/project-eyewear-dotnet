@@ -3,6 +3,7 @@ using backend.Application.Abstractions.Orders;
 using backend.Application.Exceptions;
 using backend.Constants;
 using backend.DTOs.OrderFetchDtos;
+using backend.DTOs.OrderStatusLogDtos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,15 +17,18 @@ public class OrdersController : ControllerBase
 {
     private readonly IFetchCompleteOrderService _fetchCompleteOrderService;
     private readonly IOrderSearchService _orderSearchService;
+    private readonly IOrderLogQueryService _orderLogQueryService;
     private readonly ILogger<OrdersController> _logger;
 
     public OrdersController(
         IFetchCompleteOrderService fetchCompleteOrderService,
         IOrderSearchService orderSearchService,
+        IOrderLogQueryService orderLogQueryService,
         ILogger<OrdersController> logger)
     {
         _fetchCompleteOrderService = fetchCompleteOrderService;
         _orderSearchService = orderSearchService;
+        _orderLogQueryService = orderLogQueryService;
         _logger = logger;
     }
 
@@ -73,6 +77,25 @@ public class OrdersController : ControllerBase
         _logger.LogInformation("Complete order request completed. CustomerOrderId={CustomerOrderId}, UserId={UserId}, Role={Role}", result.Order.CustomerOrderId, userId, role);
 
         return Ok(result);
+    }
+
+    /// <summary>
+    /// Fetches complete order journey logs for Admin and Super Admin users.
+    /// </summary>
+    [HttpGet("{customerOrderId}/logs")]
+    [Authorize(Roles = Roles.Admin + "," + Roles.SuperAdmin)]
+    [ProducesResponseType(typeof(IEnumerable<OrderStatusLogResponseDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> GetOrderLogs(string customerOrderId)
+    {
+        var role = User.FindFirstValue(ClaimTypes.Role) ?? string.Empty;
+        _logger.LogInformation("Order logs request received. CustomerOrderId={CustomerOrderId}, Role={Role}", customerOrderId, role);
+        var logs = await _orderLogQueryService.GetLogsForAdminAsync(customerOrderId);
+        return Ok(logs);
     }
 
     private int GetAuthenticatedUserId()

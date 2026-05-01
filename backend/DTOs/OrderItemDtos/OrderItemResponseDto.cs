@@ -10,6 +10,10 @@ public class OrderItemResponseDto
     public int Quantity { get; set; }
     public decimal Price { get; set; }
     public decimal TotalPrice { get; set; }
+    public decimal OriginalUnitPrice { get; set; }
+    public decimal ProductDiscountAmount { get; set; }
+    public decimal FinalUnitPrice { get; set; }
+    public decimal FinalLineTotal { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 }

@@ -27,6 +27,11 @@ public class CompleteOrderSummaryDto
     public string CustomerEmail { get; set; } = string.Empty;
     public string? CustomerPhone { get; set; }
     public decimal TotalAmount { get; set; }
+    public decimal OriginalSubtotal { get; set; }
+    public decimal ProductDiscountTotal { get; set; }
+    public string? CouponCode { get; set; }
+    public decimal CouponDiscountAmount { get; set; }
+    public decimal FinalAmount { get; set; }
     public PaymentStatus PaymentStatus { get; set; }
     public OrderStatus OrderStatus { get; set; }
     public string? Notes { get; set; }
@@ -44,6 +49,10 @@ public class CompleteOrderItemDto
     public int Quantity { get; set; }
     public decimal Price { get; set; }
     public decimal TotalPrice { get; set; }
+    public decimal OriginalUnitPrice { get; set; }
+    public decimal ProductDiscountAmount { get; set; }
+    public decimal FinalUnitPrice { get; set; }
+    public decimal FinalLineTotal { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public List<CompleteOrderCustomizationDto> Customizations { get; set; } = new();
@@ -120,7 +129,11 @@ public class CompleteOrderStatusLogDto
     public string OrderStatusLogsId { get; set; } = string.Empty;
     public string CustomerOrderId { get; set; } = string.Empty;
     public OrderStatus Status { get; set; }
+    public PaymentStatus? PaymentStatus { get; set; }
+    public string EventType { get; set; } = string.Empty;
     public string? Comment { get; set; }
+    public string? LogMessage { get; set; }
+    public int? CreatedByUserId { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 }
