@@ -58,7 +58,7 @@ public class OrderCreationService : IOrderCreationService
         _logger = logger;
     }
 
-    public async Task<OrderCreationResponseDto> CreateAsync(int userId, OrderCreationRequestDto dto)
+    public async Task<OrderCreationResponseDto> CreateAsync(int userId, OrderCreationRequestDto dto, Func<string, Task>? beforeCommitAsync = null)
     {
         var currentStep = "start";
         string? customerOrderId = null;
@@ -243,6 +243,12 @@ public class OrderCreationService : IOrderCreationService
             await UpdateInventoryAsync(preparedItems);
             _logger.LogInformation("Inventory updated for order. CustomerOrderId={CustomerOrderId}, ItemCount={ItemCount}", customerOrderId, preparedItems.Count);
             await AddJourneyLogAsync(customerOrderId, OrderStatus.CREATED, PaymentStatus.PENDING, "STOCK_UPDATED", "Stock updated.", userId);
+
+            if (beforeCommitAsync is not null)
+            {
+                currentStep = "before_commit_callback";
+                await beforeCommitAsync(customerOrderId);
+            }
 
             currentStep = "transaction_commit";
             await transaction.CommitAsync();

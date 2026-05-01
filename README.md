@@ -67,6 +67,15 @@ backend/
 └── appsettings.Development.json    # Dev configuration
 ```
 
+Current order-domain additions live in the same structure:
+
+- `Application/Abstractions/Orders`: order creation/fetch, discounts, coupons, cart, and wishlist service contracts
+- `Infrastructure/Services/Orders`: order orchestration, discount/coupon logic, cart service, wishlist service, and order log query service
+- `Models/Orders`: orders, order items, payments, addresses, prescriptions, discounts, coupons, coupon usages, order number sequences, and order logs
+- `Models/Carts`: active/checked-out cart lifecycle, item snapshots, customization snapshots, prescription snapshots, and cart coupon previews
+- `Models/Wishlists`: customer wishlist and wishlist item entities
+- `DTOs/OrderCreationDtos`, `DTOs/OrderFetchDtos`, `DTOs/CartDtos`, `DTOs/WishlistDtos`: frontend-facing request/response contracts
+
 ## Getting Started
 
 ### 1. Clone the repository
@@ -477,6 +486,127 @@ Example failure:
   "correlationId": "0HN7ABC123"
 }
 ```
+
+### Cart API
+
+Customer cart APIs require a `CUSTOMER` Bearer token. The frontend never sends `userId`; ownership is always taken from JWT. Cart totals are previews only and are recalculated again during checkout by the existing order creation flow.
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/cart` | Get the authenticated customer's active cart, or an empty cart |
+| `POST` | `/api/cart/items` | Add product/customization/prescription snapshot to active cart |
+| `PUT` | `/api/cart/items/{cartItemId}` | Update cart item quantity |
+| `DELETE` | `/api/cart/items/{cartItemId}` | Soft-remove an active cart item |
+| `DELETE` | `/api/cart/clear` | Clear active cart items and coupon preview |
+| `POST` | `/api/cart/apply-coupon` | Apply coupon preview to active cart |
+| `DELETE` | `/api/cart/remove-coupon` | Remove coupon preview |
+| `POST` | `/api/cart/checkout` | Convert active cart into an order |
+
+Cart tables:
+
+- `Carts`: one active cart per user, lifecycle status `ACTIVE`, `CHECKED_OUT`, or `ABANDONED`
+- `CartItems`: product/SKU/quantity and price preview snapshot
+- `CartItemCustomizations`: selected customization option/value using existing `CustomizationOptionId` and `CustomizationValueId`
+- `CartItemPrescriptions`: optional prescription snapshot for products with `HasPrescription = true`
+- `CartCoupons`: coupon preview snapshot; usage is recorded only after successful order creation
+
+Example add item:
+
+```json
+{
+  "productId": 1,
+  "quantity": 1,
+  "customizations": [
+    {
+      "customizationOptionId": 1,
+      "customizationValueId": 1
+    }
+  ],
+  "prescription": {
+    "rightSphere": -1.25,
+    "rightCylinder": -0.5,
+    "rightAxis": 90,
+    "leftSphere": -1.0,
+    "leftCylinder": -0.25,
+    "leftAxis": 80,
+    "pd": 62,
+    "notes": "Optional prescription snapshot"
+  }
+}
+```
+
+Example cart response:
+
+```json
+{
+  "cartId": "carts_...",
+  "cartStatus": "ACTIVE",
+  "items": [
+    {
+      "cartItemId": "cart_items_...",
+      "productId": 1,
+      "productName": "Classic Aviator",
+      "productImageUrl": "/images/products/aviator-front.jpg",
+      "sku": "EW-AVI-001",
+      "quantity": 1,
+      "unitPrice": 3000,
+      "productDiscountAmount": 300,
+      "finalUnitPrice": 2700,
+      "lineTotal": 2700,
+      "inStock": true,
+      "customizations": [],
+      "prescription": null
+    }
+  ],
+  "couponCode": "WELCOME500",
+  "couponDiscountAmount": 500,
+  "subtotal": 3000,
+  "productDiscountTotal": 300,
+  "finalAmount": 2200
+}
+```
+
+Checkout request sends customer/address/payment data only; items and coupon come from the active cart:
+
+```json
+{
+  "customer": {
+    "name": "Aarav Sharma",
+    "email": "aarav@example.com",
+    "phone": "9876543210"
+  },
+  "address": {
+    "type": "SHIPPING",
+    "line1": "221 MG Road",
+    "city": "Bengaluru",
+    "state": "Karnataka",
+    "pincode": "560001",
+    "country": "India"
+  },
+  "payment": {
+    "method": "COD",
+    "transactionId": null
+  },
+  "notes": "Checkout from cart"
+}
+```
+
+After successful checkout, the cart is marked `CHECKED_OUT`, `Carts.CustomerOrderId` stores the generated order id, and a later add-to-cart creates a new active cart. Cart checkout adds order journey events such as `ORDER_CREATED_FROM_CART`, `STOCK_UPDATED_FROM_CART`, `CART_MARKED_CHECKED_OUT`, and `CART_CHECKOUT_COMPLETED`.
+
+### Wishlist API
+
+Wishlist APIs require a `CUSTOMER` Bearer token and use JWT ownership only.
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/wishlist` | Get authenticated customer's wishlist |
+| `POST` | `/api/wishlist/items` | Add an active product to wishlist |
+| `DELETE` | `/api/wishlist/items/{wishlistItemId}` | Remove wishlist item |
+| `POST` | `/api/wishlist/items/{wishlistItemId}/move-to-cart` | Move directly addable product to cart |
+
+`Wishlists` stores one wishlist per customer. `WishlistItems` has a unique `WishlistId + ProductId` constraint so duplicate products are not inserted. Wishlist responses include current product price, current active product discount preview, primary image URL, and stock availability.
+
+If a wishlist product requires required customizations or supports prescription, `move-to-cart` returns `requiresProductConfiguration = true` and the frontend should send the customer to the product detail page to choose configuration.
 
 ### Order Fetch APIs
 

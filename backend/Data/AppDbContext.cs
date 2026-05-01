@@ -1,6 +1,8 @@
 using backend.Models;
+using backend.Models.Carts;
 using backend.Models.Orders;
 using backend.Models.Products;
+using backend.Models.Wishlists;
 using Microsoft.EntityFrameworkCore;
 
 namespace backend.Data;
@@ -29,6 +31,13 @@ public class AppDbContext : DbContext
     public DbSet<DiscountProduct> DiscountProducts => Set<DiscountProduct>();
     public DbSet<Coupon> Coupons => Set<Coupon>();
     public DbSet<CouponUsage> CouponUsages => Set<CouponUsage>();
+    public DbSet<Cart> Carts => Set<Cart>();
+    public DbSet<CartItem> CartItems => Set<CartItem>();
+    public DbSet<CartItemCustomization> CartItemCustomizations => Set<CartItemCustomization>();
+    public DbSet<CartItemPrescription> CartItemPrescriptions => Set<CartItemPrescription>();
+    public DbSet<CartCoupon> CartCoupons => Set<CartCoupon>();
+    public DbSet<Wishlist> Wishlists => Set<Wishlist>();
+    public DbSet<WishlistItem> WishlistItems => Set<WishlistItem>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -275,6 +284,156 @@ public class AppDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
+        modelBuilder.Entity<Cart>(entity =>
+        {
+            entity.HasKey(c => c.CartId);
+            entity.HasIndex(c => c.UserId);
+            entity.HasIndex(c => c.UserId)
+                .IsUnique()
+                .HasFilter("\"CartStatus\" = 'ACTIVE'");
+
+            entity.Property(c => c.CartStatus).HasConversion<string>().HasMaxLength(30);
+            entity.Property(c => c.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(c => c.UpdatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.HasOne(c => c.User)
+                .WithMany()
+                .HasForeignKey(c => c.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<CartItem>(entity =>
+        {
+            entity.ToTable("CartItems", table =>
+            {
+                table.HasCheckConstraint("CK_CartItems_Quantity_Positive", "\"Quantity\" > 0");
+                table.HasCheckConstraint("CK_CartItems_UnitPrice_NonNegative", "\"UnitPrice\" >= 0");
+                table.HasCheckConstraint("CK_CartItems_ProductDiscountAmount_NonNegative", "\"ProductDiscountAmount\" >= 0");
+                table.HasCheckConstraint("CK_CartItems_FinalUnitPrice_NonNegative", "\"FinalUnitPrice\" >= 0");
+                table.HasCheckConstraint("CK_CartItems_LineTotal_NonNegative", "\"LineTotal\" >= 0");
+            });
+
+            entity.HasKey(ci => ci.CartItemId);
+            entity.HasIndex(ci => ci.CartId);
+            entity.HasIndex(ci => ci.ProductId);
+            entity.Property(ci => ci.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(ci => ci.UpdatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.HasOne(ci => ci.Cart)
+                .WithMany(c => c.CartItems)
+                .HasForeignKey(ci => ci.CartId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(ci => ci.Product)
+                .WithMany()
+                .HasForeignKey(ci => ci.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<CartItemCustomization>(entity =>
+        {
+            entity.HasKey(cic => cic.CartItemCustomizationId);
+            entity.HasIndex(cic => cic.CartItemId);
+            entity.HasIndex(cic => cic.CustomizationOptionId);
+            entity.HasIndex(cic => cic.CustomizationValueId);
+            entity.Property(cic => cic.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(cic => cic.UpdatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.HasOne(cic => cic.CartItem)
+                .WithMany(ci => ci.Customizations)
+                .HasForeignKey(cic => cic.CartItemId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(cic => cic.CustomizationOption)
+                .WithMany()
+                .HasForeignKey(cic => cic.CustomizationOptionId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(cic => cic.CustomizationValueEntity)
+                .WithMany()
+                .HasForeignKey(cic => cic.CustomizationValueId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<CartItemPrescription>(entity =>
+        {
+            entity.HasKey(cip => cip.CartItemPrescriptionId);
+            entity.HasIndex(cip => cip.CartItemId).IsUnique();
+            entity.HasIndex(cip => cip.UserId);
+            entity.Property(cip => cip.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(cip => cip.UpdatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.HasOne(cip => cip.CartItem)
+                .WithOne(ci => ci.Prescription)
+                .HasForeignKey<CartItemPrescription>(cip => cip.CartItemId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(cip => cip.User)
+                .WithMany()
+                .HasForeignKey(cip => cip.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(cip => cip.CustomerPrescription)
+                .WithMany()
+                .HasForeignKey(cip => cip.CustomerPrescriptionsId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<CartCoupon>(entity =>
+        {
+            entity.ToTable("CartCoupons", table =>
+            {
+                table.HasCheckConstraint("CK_CartCoupons_CouponDiscountAmount_NonNegative", "\"CouponDiscountAmount\" >= 0");
+            });
+
+            entity.HasKey(cc => cc.CartCouponId);
+            entity.HasIndex(cc => cc.CartId);
+            entity.Property(cc => cc.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(cc => cc.UpdatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.HasOne(cc => cc.Cart)
+                .WithMany(c => c.CartCoupons)
+                .HasForeignKey(cc => cc.CartId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(cc => cc.Coupon)
+                .WithMany()
+                .HasForeignKey(cc => cc.CouponId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<Wishlist>(entity =>
+        {
+            entity.HasKey(w => w.WishlistId);
+            entity.HasIndex(w => w.UserId).IsUnique();
+            entity.Property(w => w.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(w => w.UpdatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.HasOne(w => w.User)
+                .WithMany()
+                .HasForeignKey(w => w.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<WishlistItem>(entity =>
+        {
+            entity.HasKey(wi => wi.WishlistItemId);
+            entity.HasIndex(wi => new { wi.WishlistId, wi.ProductId }).IsUnique();
+            entity.HasIndex(wi => wi.ProductId);
+            entity.Property(wi => wi.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(wi => wi.UpdatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.HasOne(wi => wi.Wishlist)
+                .WithMany(w => w.WishlistItems)
+                .HasForeignKey(wi => wi.WishlistId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(wi => wi.Product)
+                .WithMany()
+                .HasForeignKey(wi => wi.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
         modelBuilder.Entity<CustomerPrescription>(entity =>
         {
             entity.ToTable("CustomerPrescriptions", table =>
@@ -395,6 +554,27 @@ public class AppDbContext : DbContext
         var couponUsageEntries = ChangeTracker.Entries<CouponUsage>()
             .Where(e => e.State == EntityState.Modified);
         foreach (var entry in couponUsageEntries)
+            entry.Entity.UpdatedAt = DateTime.UtcNow;
+
+        foreach (var entry in ChangeTracker.Entries<Cart>().Where(e => e.State == EntityState.Modified))
+            entry.Entity.UpdatedAt = DateTime.UtcNow;
+
+        foreach (var entry in ChangeTracker.Entries<CartItem>().Where(e => e.State == EntityState.Modified))
+            entry.Entity.UpdatedAt = DateTime.UtcNow;
+
+        foreach (var entry in ChangeTracker.Entries<CartItemCustomization>().Where(e => e.State == EntityState.Modified))
+            entry.Entity.UpdatedAt = DateTime.UtcNow;
+
+        foreach (var entry in ChangeTracker.Entries<CartItemPrescription>().Where(e => e.State == EntityState.Modified))
+            entry.Entity.UpdatedAt = DateTime.UtcNow;
+
+        foreach (var entry in ChangeTracker.Entries<CartCoupon>().Where(e => e.State == EntityState.Modified))
+            entry.Entity.UpdatedAt = DateTime.UtcNow;
+
+        foreach (var entry in ChangeTracker.Entries<Wishlist>().Where(e => e.State == EntityState.Modified))
+            entry.Entity.UpdatedAt = DateTime.UtcNow;
+
+        foreach (var entry in ChangeTracker.Entries<WishlistItem>().Where(e => e.State == EntityState.Modified))
             entry.Entity.UpdatedAt = DateTime.UtcNow;
     }
 }

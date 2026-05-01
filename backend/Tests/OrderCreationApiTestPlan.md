@@ -72,19 +72,37 @@ Verify through database queries after forced failures:
 | Payment creation fails | No order-related rows remain |
 | Inventory update fails | No order-related rows remain |
 
-## Discounts
-
-Current implementation is placeholder only.
+## Discounts And Coupons
 
 | Case | Expected |
 |------|----------|
-| No coupon | `discountAmount = 0`, `finalAmount = subtotal` |
-| Any coupon code | Accepted, `discountAmount = 0`, `finalAmount = subtotal` |
-| Invalid coupon | Currently accepted because no discount table exists |
-| Expired discount | Not implemented |
-| Inactive discount | Not implemented |
-| Usage limit | Not implemented |
+| No admin discount or coupon | `productDiscountTotal = 0`, `couponDiscountAmount = 0`, `finalAmount = originalSubtotal` |
+| Active all-product admin discount | Applies automatically to eligible item unit prices |
+| Active product-specific admin discount | Applies only to mapped products in `DiscountProducts` |
+| Multiple applicable admin discounts | Best item-level discount is used per item |
+| Valid coupon | Applies after product discounts |
+| Invalid coupon | `400` |
+| Expired coupon | `400` |
+| Inactive coupon | `400` |
+| Minimum order not satisfied | `400` |
+| Global usage limit reached | `400` |
+| Per-user usage limit reached | `400` |
+| Percentage coupon with maximum amount | Coupon discount is capped |
 | Discount greater than subtotal | Guard exists in `OrderCreationService.ValidateDiscountResult` |
+| Frontend sends totals | Ignored; backend recalculates snapshots |
+
+Snapshot fields to assert on successful responses:
+
+- `originalSubtotal`
+- `productDiscountTotal`
+- `couponCode`
+- `couponDiscountAmount`
+- `discountAmount`
+- `finalAmount`
+- item `originalUnitPrice`
+- item `productDiscountAmount`
+- item `finalUnitPrice`
+- item `finalLineTotal`
 
 ## Logging
 

@@ -39,7 +39,7 @@
 | Email | VARCHAR(150) | NOT NULL, UNIQUE, EmailAddress | User's email (unique constraint) |
 | ContactNumber | VARCHAR(20) | NULLABLE, Phone validation | Optional phone number |
 | PasswordHash | TEXT | NOT NULL | BCrypt hashed password (never plain text) |
-| UserRole | VARCHAR(50) | NOT NULL | Role: "Customer", "Admin", etc. Default: "Customer" |
+| UserRole | VARCHAR(50) | NOT NULL | Role constants: `CUSTOMER`, `ADMIN`, `SUPER_ADMIN`. Default customer signup role is `CUSTOMER` |
 | IsActive | BOOLEAN | NOT NULL | Account active status. Default: true |
 | CreatedAt | DATETIME | NOT NULL | Timestamp of user creation. Default: UTC Now |
 | UpdatedAt | DATETIME | NULLABLE | Timestamp of last update. Auto-set on save |
@@ -567,7 +567,7 @@ _logger.LogInformation("Succeeded. Output: {{OutputParams}}");
     "lastName": "Doe",
     "email": "john@example.com",
     "contactNumber": "+1-234-567-8900",
-    "userRole": "Customer"
+    "userRole": "CUSTOMER"
   }
   ```
 - **Response:** `UserResponseDto` with generated Id (201 Created)
@@ -795,7 +795,7 @@ public class CreateUserDto
     public string LastName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string? ContactNumber { get; set; }
-    public string UserRole { get; set; } = "Customer";
+    public string UserRole { get; set; } = Roles.Customer;
     public string Password { get; set; } = string.Empty;
 }
 ```
@@ -819,7 +819,7 @@ public class UserResponseDto
     public string LastName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string? ContactNumber { get; set; }
-    public string UserRole { get; set; } = "Customer";
+    public string UserRole { get; set; } = string.Empty;
     public bool IsActive { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
@@ -1537,18 +1537,56 @@ The `OrderNumberSequences` table stores the daily order number state:
 
 `CustomerOrderId` format is `YYMMDDXXXXX`; for example, `26050100001`.
 
-### Discount Status
+### Discount And Coupon Status
 
-No discount tables currently exist in the backend. No `Coupons`, `DiscountRules`, `ProductDiscounts`, `CartOffers`, or usage-limit entities are present. `DiscountService` is currently a placeholder and returns:
+Discounts and coupons are now implemented with database-backed entities and backend-only calculations.
 
-```json
-{
-  "discountAmount": 0,
-  "finalAmount": "subtotal"
-}
-```
+Tables:
 
-The frontend may send `couponCode` or `discountCode`, but the backend does not validate expiry, active status, min order amount, usage limits, or eligibility yet. The TODO is to replace the placeholder once discount schema exists.
+- `Discounts`
+- `DiscountProducts`
+- `Coupons`
+- `CouponUsages`
+
+Admin/Super Admin APIs:
+
+- `GET /api/admin/discounts`
+- `POST /api/admin/discounts`
+- `PUT /api/admin/discounts/{id}`
+- `DELETE /api/admin/discounts/{id}`
+- `GET /api/admin/coupons`
+- `POST /api/admin/coupons`
+- `PUT /api/admin/coupons/{id}`
+- `DELETE /api/admin/coupons/{id}`
+
+Discount behavior:
+
+- Active admin discounts are automatically applied during order creation.
+- Discounts may apply to all products or selected products.
+- Discount type is `PERCENTAGE` or `FLAT`.
+- Product discounts are applied per item before coupon discount.
+- The best applicable product discount is selected per item.
+
+Coupon behavior:
+
+- Customers may send `couponCode` during checkout/order creation.
+- The backend validates existence, active state, optional start/end dates, minimum order amount, global usage limit, per-user usage limit, and maximum coupon amount for percentage coupons.
+- Invalid, inactive, expired, or over-limit coupons return `400`.
+- Coupon usage is written to `CouponUsages` only after successful order creation.
+
+Snapshot fields:
+
+- `Orders.OriginalSubtotal`
+- `Orders.ProductDiscountTotal`
+- `Orders.CouponCode`
+- `Orders.CouponDiscountAmount`
+- `Orders.FinalAmount`
+- `OrderItems.OriginalUnitPrice`
+- `OrderItems.ProductDiscountAmount`
+- `OrderItems.FinalUnitPrice`
+- `OrderItems.FinalLineTotal`
+
+The frontend must not send or trust totals. `originalSubtotal`, `productDiscountTotal`, `couponDiscountAmount`, item totals, and `finalAmount` are calculated by the backend.
 
 ### Error Contract
 
@@ -1657,5 +1695,75 @@ Security:
 
 ---
 
+## 13. Cart APIs
+
+Customer cart APIs are implemented for the active checkout flow. All endpoints require a `CUSTOMER` Bearer token and always read `UserId` from JWT. Admin and Super Admin users receive `403` on these customer endpoints.
+
+Endpoints:
+
+- `GET /api/cart`
+- `POST /api/cart/items`
+- `PUT /api/cart/items/{cartItemId}`
+- `DELETE /api/cart/items/{cartItemId}`
+- `DELETE /api/cart/clear`
+- `POST /api/cart/apply-coupon`
+- `DELETE /api/cart/remove-coupon`
+- `POST /api/cart/checkout`
+
+Tables:
+
+- `Carts`
+- `CartItems`
+- `CartItemCustomizations`
+- `CartItemPrescriptions`
+- `CartCoupons`
+
+Rules:
+
+- One active cart per user is enforced with a filtered unique index on `Carts.UserId` where `CartStatus = 'ACTIVE'`.
+- Cart status values are `ACTIVE`, `CHECKED_OUT`, and `ABANDONED`.
+- Checked-out and abandoned carts cannot be modified.
+- Cart item rows are kept as historical snapshots; item removal is a soft remove via `IsActive = false`.
+- Cart price values are previews only. Final checkout recalculates products, customizations, stock, discounts, coupons, totals, payment, inventory, coupon usage, and order logs through the existing order creation flow.
+- `CartItemCustomizations` references the existing `CustomizationOptionId` and `CustomizationValueId` columns.
+- `CartItemPrescriptions` stores optional prescription snapshots. Product `HasPrescription = true` means prescription is supported, not required. Products with `HasPrescription = false` reject cart prescription data.
+- Cart checkout currently supports one distinct prescription snapshot per order because the existing order creation DTO has one order-level prescription object.
+
+Checkout behavior:
+
+- `POST /api/cart/checkout` takes customer, address, payment, and notes.
+- Items and coupon code come from the active cart.
+- The order is created through `OrderCreationService`.
+- Cart status is updated to `CHECKED_OUT` inside the order creation transaction by the `beforeCommitAsync` callback.
+- `Carts.CustomerOrderId` stores the generated order id.
+- `Carts.CheckedOutAt` stores checkout time.
+- Cart checkout adds order journey events such as `CART_CHECKOUT_STARTED`, `ORDER_CREATED_FROM_CART`, `STOCK_UPDATED_FROM_CART`, `CART_MARKED_CHECKED_OUT`, and `CART_CHECKOUT_COMPLETED`.
+
+## 14. Wishlist APIs
+
+Wishlist APIs are customer-only and use JWT ownership.
+
+Endpoints:
+
+- `GET /api/wishlist`
+- `POST /api/wishlist/items`
+- `DELETE /api/wishlist/items/{wishlistItemId}`
+- `POST /api/wishlist/items/{wishlistItemId}/move-to-cart`
+
+Tables:
+
+- `Wishlists`
+- `WishlistItems`
+
+Rules:
+
+- One wishlist per customer.
+- `WishlistId + ProductId` is unique, so duplicate products are not inserted.
+- Wishlist responses include product name, primary image URL, current price, current active product discount preview, availability, and stock quantity.
+- Move-to-cart succeeds only when the product can be directly added. If the product has required customizations or supports prescription, the response returns `requiresProductConfiguration = true` so the frontend can send the customer to product detail configuration.
+
+---
+
 **End of Documentation**
 **Generated: April 9, 2026**
+**Updated: May 1, 2026 for order discounts, coupons, cart, wishlist, and .NET 10 backend state**

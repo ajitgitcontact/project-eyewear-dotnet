@@ -13,7 +13,8 @@
 # - Replace token and product/customization variables before running.
 # - Use Swagger or GET /api/products to choose product/customization IDs that exist.
 # - Verify rollback cases by checking the database has no rows for the returned/attempted order when a request fails.
-# - Discount scenarios currently document placeholder behavior: coupon codes are accepted but discountAmount remains 0.
+# - Discount and coupon scenarios require admin-created rows in Discounts/Coupons.
+# - Backend recalculates originalSubtotal, productDiscountTotal, couponDiscountAmount, finalAmount, and item price snapshots.
 
 ###
 
@@ -265,7 +266,7 @@ Content-Type: application/json
 
 ###
 
-# Security: frontend UserId, CustomerOrderId, totals, and statuses should be ignored.
+# Security: frontend UserId, CustomerOrderId, totals, discount amounts, and statuses should be ignored.
 # Expected success if product/customization data is valid; response userId must match JWT,
 # customerOrderId must be backend-generated, paymentStatus must be PENDING, status must be INITIATED.
 POST {{backend_HostAddress}}/api/orders/create
@@ -309,7 +310,7 @@ Content-Type: application/json
     "method": "COD",
     "status": "SUCCESS"
   },
-  "couponCode": "ANY_CODE"
+  "couponCode": "WELCOME500"
 }
 
 ###
@@ -347,4 +348,41 @@ Content-Type: application/json
   ],
   "payment": { "method": "COD" },
   "couponCode": "WELCOME500"
+}
+
+###
+
+# Discounts: invalid coupon should fail with 400.
+POST {{backend_HostAddress}}/api/orders/create
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "customer": {
+    "name": "Aarav Sharma",
+    "email": "aarav@example.com",
+    "phone": "9876543210"
+  },
+  "address": {
+    "type": "SHIPPING",
+    "line1": "221 MG Road",
+    "city": "Bengaluru",
+    "state": "Karnataka",
+    "pincode": "560001",
+    "country": "India"
+  },
+  "items": [
+    {
+      "productId": {{productId}},
+      "quantity": 1,
+      "customizations": [
+        {
+          "customizationOptionId": {{requiredOptionId}},
+          "customizationValueId": {{validValueId}}
+        }
+      ]
+    }
+  ],
+  "payment": { "method": "COD" },
+  "couponCode": "NOT_A_REAL_COUPON"
 }

@@ -31,7 +31,7 @@ Environment:
 | Frontend-spoofed fields ignored | Passed |
 | CustomerOrderId format valid | Passed |
 | CustomerOrderId sequence increments | Passed |
-| Discount placeholder totals | Passed |
+| Backend discount/coupon calculation | Passed in later discount live tests |
 | Concurrent requests no duplicate IDs | Passed |
 | Sensitive transaction id not logged | Passed |
 
@@ -51,6 +51,15 @@ Pricing observed:
 - Subtotal: `13.00`
 - Discount amount: `0`
 - Final amount: `13.00`
+
+Later discount/coupon live tests after the admin discount implementation verified:
+
+- Product-specific flat discount order: `26050100004`
+- Coupon-only order: `26050100005`
+- All-products sale plus coupon order: `26050100006`
+- Invalid/inactive coupon returned `400`
+
+The current implementation uses `Discounts`, `DiscountProducts`, `Coupons`, and `CouponUsages`. Coupon usage rows are created only after successful order creation. Frontend-provided totals are ignored.
 
 Security behavior observed:
 

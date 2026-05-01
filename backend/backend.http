@@ -254,3 +254,150 @@ Authorization: Bearer {{adminToken}}
 Accept: application/json
 
 ###
+
+# ------------------------------
+# CART APIs
+# ------------------------------
+
+# Customer: get active cart. Empty cart returns an empty response, not an error.
+GET {{backend_HostAddress}}/api/cart
+Authorization: Bearer {{customerToken}}
+Accept: application/json
+
+###
+
+# Customer: add item to cart.
+# Product/customization IDs must come from GET /api/products.
+POST {{backend_HostAddress}}/api/cart/items
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "quantity": 1,
+  "customizations": [
+    {
+      "customizationOptionId": 1,
+      "customizationValueId": 1
+    }
+  ],
+  "prescription": null
+}
+
+###
+
+@cartItemId = cart_items_REPLACE_ME
+
+# Customer: update cart item quantity.
+PUT {{backend_HostAddress}}/api/cart/items/{{cartItemId}}
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "quantity": 2
+}
+
+###
+
+# Customer: apply coupon preview. Coupon is revalidated during checkout.
+POST {{backend_HostAddress}}/api/cart/apply-coupon
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "couponCode": "WELCOME500"
+}
+
+###
+
+# Customer: remove coupon preview.
+DELETE {{backend_HostAddress}}/api/cart/remove-coupon
+Authorization: Bearer {{customerToken}}
+Accept: application/json
+
+###
+
+# Customer: checkout active cart through existing order creation flow.
+POST {{backend_HostAddress}}/api/cart/checkout
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "customer": {
+    "name": "Aarav Sharma",
+    "email": "aarav@example.com",
+    "phone": "9876543210"
+  },
+  "address": {
+    "type": "SHIPPING",
+    "line1": "221 MG Road",
+    "line2": "Near Metro Station",
+    "city": "Bengaluru",
+    "state": "Karnataka",
+    "pincode": "560001",
+    "country": "India"
+  },
+  "payment": {
+    "method": "COD",
+    "transactionId": null
+  },
+  "notes": "Checkout from cart."
+}
+
+###
+
+# Customer: remove cart item.
+DELETE {{backend_HostAddress}}/api/cart/items/{{cartItemId}}
+Authorization: Bearer {{customerToken}}
+Accept: application/json
+
+###
+
+# Customer: clear active cart.
+DELETE {{backend_HostAddress}}/api/cart/clear
+Authorization: Bearer {{customerToken}}
+Accept: application/json
+
+###
+
+# ------------------------------
+# WISHLIST APIs
+# ------------------------------
+
+# Customer: get wishlist.
+GET {{backend_HostAddress}}/api/wishlist
+Authorization: Bearer {{customerToken}}
+Accept: application/json
+
+###
+
+# Customer: add product to wishlist.
+POST {{backend_HostAddress}}/api/wishlist/items
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "productId": 1
+}
+
+###
+
+@wishlistItemId = wishlist_items_REPLACE_ME
+
+# Customer: move wishlist item to cart if no product detail configuration is required.
+POST {{backend_HostAddress}}/api/wishlist/items/{{wishlistItemId}}/move-to-cart
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "quantity": 1
+}
+
+###
+
+# Customer: remove wishlist item.
+DELETE {{backend_HostAddress}}/api/wishlist/items/{{wishlistItemId}}
+Authorization: Bearer {{customerToken}}
+Accept: application/json
+
+###
