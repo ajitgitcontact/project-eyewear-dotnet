@@ -7,6 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { ProductManagementClientInstance } from "@/lib/api/productManagementClient";
 import { formatUsd } from "@/lib/currency";
+import { demoProductImageSrc } from "@/lib/demoProductImage";
 import { Product } from "@/lib/types";
 import styles from "@/styles/orders.module.css";
 
@@ -69,20 +70,14 @@ export default function WishlistView() {
       ) : (
         <div className={styles.wishlistGrid}>
           {products.map((product) => {
-            const primaryImage = product.images.find((image) => image.isPrimary) ?? product.images[0];
-
             return (
               <article key={product.productId} className={styles.wishlistCard}>
-                {primaryImage ? (
-                  <img src={primaryImage.imageUrl} alt={product.name} className={styles.wishlistImage} />
-                ) : (
-                  <div className={styles.wishlistImagePlaceholder}>No image</div>
-                )}
+                <img src={demoProductImageSrc} alt={product.name} className={styles.wishlistImage} />
                 <div className={styles.wishlistBody}>
                   <div>
                     <h2>{product.name}</h2>
-                    <p>{product.category}</p>
-                    <p>SKU {product.sku}</p>
+                    <p>{product.brand ? `${product.brand} | ${product.category}` : product.category}</p>
+                    {product.availableQuantity <= 0 ? <p>Out of stock</p> : null}
                   </div>
                   <strong>{formatUsd(product.basePrice)}</strong>
                   <div className={styles.inlineActions}>

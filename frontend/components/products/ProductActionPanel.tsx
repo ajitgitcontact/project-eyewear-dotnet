@@ -252,8 +252,8 @@ export default function ProductActionPanel({ product }: ProductActionPanelProps)
           <strong>{formatUsd(totalAmount)}</strong>
         </div>
         <div>
-          <span>Stock</span>
-          <strong>{product.availableQuantity} available</strong>
+          <span>Availability</span>
+          <strong>{product.availableQuantity > 0 ? "Ready to order" : "Out of stock"}</strong>
         </div>
       </div>
 

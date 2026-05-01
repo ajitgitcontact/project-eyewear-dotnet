@@ -76,9 +76,11 @@ export default function Header() {
 
           {user ? (
             <div className={styles.userActions}>
-              <div className={styles.userInfo}>
-                <span className={styles.userName}>{user.name}</span>
-              </div>
+              <Link href="/account" className={styles.userInfoLink}>
+                <div className={styles.userInfo}>
+                  <span className={styles.userName}>{user.name}</span>
+                </div>
+              </Link>
               <Link href="/wishlist" className={styles.iconButton}>
                 Wishlist ({count})
               </Link>

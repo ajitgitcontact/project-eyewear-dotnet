@@ -130,6 +130,15 @@
   margin-right: 8px;
 }
 
+.userInfoLink {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+}
+
 .userName {
   color: #f5f1e8;
   font-size: 14px;

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Product } from "@/lib/types";
 import { formatUsd } from "@/lib/currency";
+import { demoProductImageSrc } from "@/lib/demoProductImage";
 import styles from "@/styles/productgrid.module.css";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5047/api";
@@ -98,7 +99,7 @@ export default function ProductGrid() {
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search by name, SKU, category, or brand"
+              placeholder="Search by name, category, or brand"
               className={styles.searchInput}
             />
           </div>
@@ -164,43 +165,40 @@ export default function ProductGrid() {
                     categoryRefs.current[category] = node;
                   }}
                 >
-                  {items.map((product) => (
-                    <div key={product.productId} className={styles.productCard}>
-                      <div className={styles.imageContainer}>
-                        {product.images.length > 0 ? (
-                          <img
-                            src={product.images[0].imageUrl}
-                            alt={product.name}
-                            className={styles.image}
-                          />
-                        ) : (
-                          <div className={styles.placeholderImage}>No Image</div>
-                        )}
-                      </div>
+                  {items.map((product) => {
+                    const statusLabel = !product.isActive
+                      ? "Coming Soon"
+                      : product.availableQuantity <= 0
+                        ? "Out of Stock"
+                        : null;
 
-                      <div className={styles.info}>
-                        <h3 className={styles.name}>{product.name}</h3>
-                        <p className={styles.sku}>SKU: {product.sku}</p>
-
-                        {product.description && (
-                          <p className={styles.description}>{product.description}</p>
-                        )}
-
-                        <div className={styles.pricing}>
-                          <span className={styles.price}>{formatUsd(product.basePrice)}</span>
-                          <span className={styles.available}>
-                            {product.availableQuantity > 0
-                              ? `${product.availableQuantity} in stock`
-                              : "Out of Stock"}
-                          </span>
-                        </div>
-
-                        <Link href={`/product/${product.productId}`} className={styles.viewButton}>
-                          View Details
+                    return (
+                      <article key={product.productId} className={styles.productCard}>
+                        <Link href={`/product/${product.productId}`} className={styles.imageLink}>
+                          <div className={styles.imageContainer}>
+                            {statusLabel ? <span className={styles.statusBadge}>{statusLabel}</span> : null}
+                            <img
+                              src={demoProductImageSrc}
+                              alt={product.name}
+                              className={styles.image}
+                            />
+                          </div>
                         </Link>
-                      </div>
-                    </div>
-                  ))}
+
+                        <div className={styles.info}>
+                          <Link href={`/product/${product.productId}`} className={styles.nameLink}>
+                            <h3 className={styles.name}>{product.name}</h3>
+                          </Link>
+                          <p className={styles.prescriptionLabel}>
+                            {product.hasPrescription ? "Prescription Compatible" : "Fashion Eyewear"}
+                          </p>
+                          <div className={styles.pricing}>
+                            <span className={styles.price}>{formatUsd(product.basePrice)}</span>
+                          </div>
+                        </div>
+                      </article>
+                    );
+                  })}
                 </div>
 
                 <button

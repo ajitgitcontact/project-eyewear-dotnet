@@ -10,7 +10,8 @@
 .filterCard,
 .listCard,
 .detailCard,
-.wishlistCard {
+.wishlistCard,
+.accountCard {
   background: rgba(23, 23, 23, 0.96);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 1.2rem;
@@ -60,7 +61,8 @@
 
 .listCard,
 .detailCard,
-.filterCard {
+.filterCard,
+.accountCard {
   padding: 1.25rem;
 }
 
@@ -212,10 +214,18 @@
   cursor: pointer;
 }
 
+.accountGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
 @media (max-width: 1024px) {
   .columns,
   .detailGrid,
-  .filterForm {
+  .filterForm,
+  .accountGrid {
     grid-template-columns: 1fr;
   }
 }
@@ -235,7 +245,8 @@
   .filterCard,
   .listCard,
   .detailCard,
-  .wishlistBody {
+  .wishlistBody,
+  .accountCard {
     padding: 0.9rem;
   }
 
@@ -244,6 +255,7 @@
   .listCard,
   .detailCard,
   .wishlistCard,
+  .accountCard,
   .infoPanel,
   .itemCard,
   .timelineItem,
