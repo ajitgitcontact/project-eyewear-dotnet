@@ -133,16 +133,55 @@
 .userInfoLink {
   display: inline-flex;
   align-items: center;
+  gap: 0.7rem;
   padding: 8px 10px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.04);
 }
 
+.userIcon {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.userIconHead {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #f5f1e8;
+  display: block;
+}
+
+.userIconBody {
+  width: 12px;
+  height: 6px;
+  border-radius: 999px 999px 4px 4px;
+  background: #f5f1e8;
+  display: block;
+  margin-top: 2px;
+}
+
 .userName {
   color: #f5f1e8;
   font-size: 14px;
   font-weight: 700;
+}
+
+.userTabLabel {
+  color: rgba(245, 241, 232, 0.58);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
 }
 
 .userRole {
@@ -303,6 +342,25 @@
 
   .userName {
     font-size: 12px;
+  }
+
+  .userTabLabel {
+    font-size: 9px;
+  }
+
+  .userIcon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .userIconHead {
+    width: 7px;
+    height: 7px;
+  }
+
+  .userIconBody {
+    width: 10px;
+    height: 5px;
   }
 
   .utilityLinks {

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useWishlist } from "@/context/WishlistContext";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import styles from "@/styles/header.module.css";
 
 const primaryLinks = [
@@ -18,16 +18,10 @@ const primaryLinks = [
 const secondaryLinks = ["Transition Lenses", "Apparel", "Virtual Try On"];
 
 export default function Header() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const { count } = useWishlist();
-  const router = useRouter();
   const pathname = usePathname();
   const [currency, setCurrency] = useState("USD");
-
-  const handleLogout = () => {
-    logout();
-    router.push("/login");
-  };
 
   return (
     <header className={styles.header}>
@@ -77,7 +71,12 @@ export default function Header() {
           {user ? (
             <div className={styles.userActions}>
               <Link href="/account" className={styles.userInfoLink}>
+                <span className={styles.userIcon} aria-hidden="true">
+                  <span className={styles.userIconHead} />
+                  <span className={styles.userIconBody} />
+                </span>
                 <div className={styles.userInfo}>
+                  <span className={styles.userTabLabel}>User</span>
                   <span className={styles.userName}>{user.name}</span>
                 </div>
               </Link>
@@ -100,9 +99,6 @@ export default function Header() {
                   </Link>
                 </div>
               )}
-              <button onClick={handleLogout} className={styles.iconButton}>
-                Logout
-              </button>
             </div>
           ) : (
             <div className={styles.userActions}>

@@ -6,7 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import styles from "@/styles/orders.module.css";
 
 export default function AccountView() {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading, logout } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -18,6 +18,11 @@ export default function AccountView() {
   if (isLoading || !isAuthenticated || !user) {
     return <main className={styles.pageState}>Loading your account...</main>;
   }
+
+  const handleLogout = () => {
+    logout();
+    router.push("/login");
+  };
 
   return (
     <main className={styles.page}>
@@ -55,6 +60,12 @@ export default function AccountView() {
             <h3>Member since</h3>
             <p>{new Date(user.createdAt).toLocaleString()}</p>
           </div>
+        </div>
+
+        <div className={styles.accountActions}>
+          <button type="button" className={styles.secondaryButton} onClick={handleLogout}>
+            Logout
+          </button>
         </div>
       </section>
     </main>

@@ -221,6 +221,12 @@
   margin-top: 1rem;
 }
 
+.accountActions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
 @media (max-width: 1024px) {
   .columns,
   .detailGrid,
@@ -333,5 +339,9 @@
   .secondaryButton {
     padding: 0.7rem 0.85rem;
     font-size: 0.85rem;
+  }
+
+  .accountActions {
+    margin-top: 0.85rem;
   }
 }
