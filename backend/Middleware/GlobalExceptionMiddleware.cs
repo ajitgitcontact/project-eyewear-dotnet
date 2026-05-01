@@ -40,6 +40,16 @@ public class GlobalExceptionMiddleware
 
             await WriteProblemDetailsAsync(context, StatusCodes.Status401Unauthorized, ex.Message);
         }
+        catch (ForbiddenException ex)
+        {
+            _logger.LogWarning(ex,
+                "Forbidden request for {Method} {Path}. CorrelationId={CorrelationId}",
+                context.Request.Method,
+                context.Request.Path,
+                context.TraceIdentifier);
+
+            await WriteProblemDetailsAsync(context, StatusCodes.Status403Forbidden, ex.Message);
+        }
         catch (NotFoundException ex)
         {
             _logger.LogInformation(ex,

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Product } from "@/lib/types";
+import { formatUsd } from "@/lib/currency";
 import styles from "@/styles/productgrid.module.css";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5047/api";
@@ -186,7 +187,7 @@ export default function ProductGrid() {
                         )}
 
                         <div className={styles.pricing}>
-                          <span className={styles.price}>${product.basePrice.toFixed(2)}</span>
+                          <span className={styles.price}>{formatUsd(product.basePrice)}</span>
                           <span className={styles.available}>
                             {product.availableQuantity > 0
                               ? `${product.availableQuantity} in stock`

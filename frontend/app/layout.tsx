@@ -1,6 +1,7 @@
 import "../styles/globals.css";
 import type { Metadata } from "next";
 import { AuthProvider } from "@/context/AuthContext";
+import { WishlistProvider } from "@/context/WishlistContext";
 import Header from "@/components/common/Header";
 import Footer from "@/components/common/Footer";
 
@@ -14,11 +15,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body>
         <AuthProvider>
-          <div className="siteShell">
-            <Header />
-            <div className="siteContent">{children}</div>
-            <Footer />
-          </div>
+          <WishlistProvider>
+            <div className="siteShell">
+              <Header />
+              <div className="siteContent">{children}</div>
+              <Footer />
+            </div>
+          </WishlistProvider>
         </AuthProvider>
       </body>
     </html>

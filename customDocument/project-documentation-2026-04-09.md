@@ -6,8 +6,8 @@
 ## 1. Project Overview
 
 ### Technology Stack
-- **.NET 9** ASP.NET Core Web API (Controller-based)
-- **Entity Framework Core 9** with Npgsql PostgreSQL driver
+- **.NET 10 / `net10.0`** ASP.NET Core Web API (Controller-based)
+- **Entity Framework Core 9 packages** with Npgsql PostgreSQL driver
 - **PostgreSQL** Database via Supabase Session Pooler
 - **Serilog 9.0.0** Structured Logging with Console and File sinks
 - **BCrypt.Net-Next 4.1.0** Password hashing
@@ -15,7 +15,7 @@
 
 ### Development Environment
 - **IDE:** Visual Studio Code
-- **Runtime:** .NET 9.0
+- **Runtime:** .NET 10.0 SDK/runtime (`10.0.203` verified locally)
 - **Dev Server:** http://localhost:5047
 - **Swagger UI:** http://localhost:5047/swagger
 - **Database:** PostgreSQL via Supabase (pool connection: aws-1-ap-northeast-1.pooler.supabase.com:5432)
@@ -1487,9 +1487,173 @@ dotnet run --project backend/backend.csproj --configuration Release
 
 - **Log Retention:** 14 days (rolling daily files)
 - **Database:** EF Core migrations managed via `backend/Migrations/` folder
-- **ASP.NET Core Version:** .NET 9 required (10.x not compatible with current Npgsql)
+- **ASP.NET Core Version:** Project currently targets .NET 10 (`net10.0`)
 - **NuGet Packages:** Keep Serilog, Npgsql, and BCrypt.Net-Next updated
 - **Service Scalability:** Current Scoped DI suitable for request volumes up to ~1000 req/s per instance
+
+---
+
+## 11. Order Creation API
+
+### Endpoint
+
+`POST /api/orders/create`
+
+Creates a complete checkout order in one backend transaction.
+
+### Authentication
+
+Requires Bearer JWT with one of these roles:
+
+- `CUSTOMER`
+- `ADMIN`
+- `SUPER_ADMIN`
+
+The API ignores frontend identity fields. `UserId` is read from the JWT `NameIdentifier` claim. `CustomerOrderId`, totals, payment status, and order status are generated or calculated by backend code.
+
+### Flow
+
+1. `OrderCreationController` receives the request and extracts the JWT user id.
+2. `OrderCreationService` opens an EF Core database transaction.
+3. `OrderCreationValidatorService` validates user, products, stock, customizations, and prescription compatibility.
+4. `CustomerOrderIdGeneratorService` generates `YYMMDDXXXXX`.
+5. Backend calculates item totals from product base price and selected customization additional prices.
+6. `DiscountService` is called.
+7. Existing order services create the order, items, customizations, address, prescription, payment, and status log.
+8. Inventory is decremented with a conditional SQL update to avoid concurrent oversell.
+9. The transaction commits. On any exception, it rolls back.
+
+### OrderNumberSequences
+
+The `OrderNumberSequences` table stores the daily order number state:
+
+| Column | Description |
+|--------|-------------|
+| OrderNumberSequencesId | Primary key |
+| SequenceDate | Server local date, unique |
+| LastSequenceNumber | Last number issued for the date |
+| CreatedAt | Row creation timestamp |
+| UpdatedAt | Last update timestamp |
+
+`CustomerOrderId` format is `YYMMDDXXXXX`; for example, `26050100001`.
+
+### Discount Status
+
+No discount tables currently exist in the backend. No `Coupons`, `DiscountRules`, `ProductDiscounts`, `CartOffers`, or usage-limit entities are present. `DiscountService` is currently a placeholder and returns:
+
+```json
+{
+  "discountAmount": 0,
+  "finalAmount": "subtotal"
+}
+```
+
+The frontend may send `couponCode` or `discountCode`, but the backend does not validate expiry, active status, min order amount, usage limits, or eligibility yet. The TODO is to replace the placeholder once discount schema exists.
+
+### Error Contract
+
+Application exceptions are returned by `GlobalExceptionMiddleware`:
+
+```json
+{
+  "message": "Product not found.",
+  "correlationId": "0HN..."
+}
+```
+
+Expected status codes are `400`, `401`, `403`, `404`, `409`, and `500`.
+
+---
+
+## 12. Order Fetch APIs
+
+### Complete Order Detail
+
+Endpoint: `GET /api/orders/{customerOrderId}`
+
+Roles:
+
+- `CUSTOMER`
+- `ADMIN`
+- `SUPER_ADMIN`
+
+Behavior:
+
+- Validates `customerOrderId` as `YYMMDDXXXXX`.
+- Reads user id and role from JWT claims.
+- `CUSTOMER` can fetch only orders whose `Orders.UserId` matches the JWT user id.
+- `ADMIN` and `SUPER_ADMIN` can fetch any order.
+- Customer payment data is limited to method, status, amount, and created timestamp.
+- Admin payment data includes current payment model fields, including transaction id.
+
+Service:
+
+- `IFetchCompleteOrderService`
+- `FetchCompleteOrderService`
+
+Uses existing order services for order, items, customizations, addresses, prescriptions, payments, and status logs.
+
+### Admin Order Search
+
+Endpoint: `GET /api/orders`
+
+Roles:
+
+- `ADMIN`
+- `SUPER_ADMIN`
+
+Service:
+
+- `IOrderSearchService`
+- `OrderSearchService`
+
+Filters:
+
+- `fromCreatedDate`
+- `toCreatedDate`
+- `orderStatus`
+- `paymentStatus`
+- `customerOrderId`
+- `email`
+- `contactNumber`
+- `userId`
+- `pageNumber`
+- `pageSize`
+
+Rules:
+
+- Sorts by `CreatedAt` descending.
+- Defaults: `pageNumber=1`, `pageSize=20`.
+- Maximum page size is `100`.
+- Invalid date range or pagination throws `BadRequestException`.
+
+### Customer My Orders
+
+Endpoint: `GET /api/customer/orders`
+
+Role:
+
+- `CUSTOMER`
+
+Service:
+
+- `ICustomerOrderListService`
+- `CustomerOrderListService`
+
+Rules:
+
+- Reads user id from JWT.
+- Does not accept user id from query/body.
+- Returns only orders owned by the authenticated customer.
+- Supports date, order status, payment status, and pagination filters.
+- Returns an empty list when no orders match.
+
+Security:
+
+- Customer detail response does not expose transaction id or internal payment id.
+- Admin search is unavailable to customers.
+- Customer order list is unavailable to admin/super admin by design.
+- Services use DTOs and never return EF entities directly.
 
 ---
 

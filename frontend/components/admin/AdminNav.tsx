@@ -10,6 +10,7 @@ export default function AdminNav() {
   const tabs = [
     { name: "User Management", path: "/admin/users" },
     { name: "Product Management", path: "/admin/products" },
+    { name: "Order Management", path: "/admin/orders" },
   ];
 
   return (

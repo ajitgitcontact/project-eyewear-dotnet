@@ -2,6 +2,8 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { Product } from "../../../lib/types";
+import { formatUsd } from "@/lib/currency";
+import ProductActionPanel from "@/components/products/ProductActionPanel";
 
 interface PageProps {
   params: Promise<{
@@ -58,7 +60,7 @@ export default async function ProductPage({ params }: PageProps) {
             </div>
           )}
           <div style={{ padding: "1.5rem" }}>
-            <p className="price">Rs. {product.basePrice.toFixed(2)}</p>
+            <p className="price">{formatUsd(product.basePrice)}</p>
             <p className="detailText">{product.availableQuantity} units available</p>
             <p className="detailText">{product.soldQuantity} sold | Priority {product.priority}</p>
             <p className="detailText">Prescription required: {product.hasPrescription ? "Yes" : "No"}</p>
@@ -82,7 +84,7 @@ export default async function ProductPage({ params }: PageProps) {
                     {option.values.map((value) => (
                       <div key={value.customizationValueId} className="valueRow">
                         <span>{value.value}</span>
-                        <span>+Rs. {value.additionalPrice.toFixed(2)}</span>
+                        <span>+{formatUsd(value.additionalPrice)}</span>
                       </div>
                     ))}
                   </div>
@@ -102,6 +104,7 @@ export default async function ProductPage({ params }: PageProps) {
                 ))
               )}
             </div>
+            <ProductActionPanel product={product} />
           </div>
         </div>
       </div>

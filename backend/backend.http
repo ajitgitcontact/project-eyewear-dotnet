@@ -101,3 +101,88 @@ GET {{backend_HostAddress}}/api/products/sku/PRD-000001
 Accept: application/json
 
 ###
+
+# ------------------------------
+# ORDER CREATION API
+# ------------------------------
+
+@customerToken = <CUSTOMER_TOKEN>
+
+# Create complete checkout order.
+# Replace product/customization IDs with values from GET /api/products.
+POST {{backend_HostAddress}}/api/orders/create
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "customer": {
+    "name": "Aarav Sharma",
+    "email": "aarav@example.com",
+    "phone": "9876543210"
+  },
+  "address": {
+    "type": "SHIPPING",
+    "line1": "221 MG Road",
+    "line2": "Near Metro Station",
+    "city": "Bengaluru",
+    "state": "Karnataka",
+    "pincode": "560001",
+    "country": "India"
+  },
+  "items": [
+    {
+      "productId": 1,
+      "quantity": 1,
+      "customizations": [
+        {
+          "customizationOptionId": 1,
+          "customizationValueId": 1
+        }
+      ]
+    }
+  ],
+  "payment": {
+    "method": "COD",
+    "transactionId": null
+  },
+  "couponCode": "WELCOME500",
+  "notes": "Leave package with security."
+}
+
+###
+
+# Order creation should fail without authentication.
+POST {{backend_HostAddress}}/api/orders/create
+Content-Type: application/json
+
+{}
+
+###
+
+# ------------------------------
+# ORDER FETCH APIs
+# ------------------------------
+
+@customerOrderId = 26050100001
+@adminToken = <ADMIN_TOKEN>
+
+# Customer/Admin/Super Admin: fetch complete order by CustomerOrderId.
+GET {{backend_HostAddress}}/api/orders/{{customerOrderId}}
+Authorization: Bearer {{customerToken}}
+Accept: application/json
+
+###
+
+# Admin/Super Admin: search all orders.
+GET {{backend_HostAddress}}/api/orders?pageNumber=1&pageSize=20&orderStatus=CREATED&paymentStatus=PENDING
+Authorization: Bearer {{adminToken}}
+Accept: application/json
+
+###
+
+# Customer: My Orders.
+GET {{backend_HostAddress}}/api/customer/orders?pageNumber=1&pageSize=20
+Authorization: Bearer {{customerToken}}
+Accept: application/json
+
+###

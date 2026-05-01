@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useWishlist } from "@/context/WishlistContext";
 import { usePathname, useRouter } from "next/navigation";
 import styles from "@/styles/header.module.css";
 
@@ -18,9 +19,10 @@ const secondaryLinks = ["Transition Lenses", "Apparel", "Virtual Try On"];
 
 export default function Header() {
   const { user, logout } = useAuth();
+  const { count } = useWishlist();
   const router = useRouter();
   const pathname = usePathname();
-  const [currency, setCurrency] = useState("GBP");
+  const [currency, setCurrency] = useState("USD");
 
   const handleLogout = () => {
     logout();
@@ -69,9 +71,7 @@ export default function Header() {
             value={currency}
             onChange={(e) => setCurrency(e.target.value)}
           >
-            <option value="GBP">GBP</option>
             <option value="USD">USD</option>
-            <option value="INR">INR</option>
           </select>
 
           {user ? (
@@ -79,6 +79,12 @@ export default function Header() {
               <div className={styles.userInfo}>
                 <span className={styles.userName}>{user.name}</span>
               </div>
+              <Link href="/wishlist" className={styles.iconButton}>
+                Wishlist ({count})
+              </Link>
+              <Link href="/orders" className={styles.iconButton}>
+                My Orders
+              </Link>
               {(user.role === "ADMIN" || user.role === "SUPER_ADMIN") && (
                 <div className={styles.adminMenu}>
                   <Link href="/admin/users" className={styles.iconButton}>
@@ -86,6 +92,9 @@ export default function Header() {
                   </Link>
                   <Link href="/admin/products" className={styles.iconButton}>
                     Products
+                  </Link>
+                  <Link href="/admin/orders" className={styles.iconButton}>
+                    Orders
                   </Link>
                 </div>
               )}

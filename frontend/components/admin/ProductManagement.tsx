@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { formatUsd } from "@/lib/currency";
 import {
   CreateFullProductRequest,
   CreateCustomizationImageRequest,
@@ -906,7 +907,7 @@ export default function ProductManagement() {
                       <td className={styles.sku}>{product.sku}</td>
                       <td className={styles.name}>{product.name}</td>
                       <td>{product.category}</td>
-                      <td className={styles.price}>${product.basePrice.toFixed(2)}</td>
+                      <td className={styles.price}>{formatUsd(product.basePrice)}</td>
                       <td className={styles.quantity}>{product.availableQuantity}</td>
                       <td>{product.customizationOptions.length}</td>
                       <td>{product.images.length}</td>
